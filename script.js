@@ -172,7 +172,9 @@ function calculateHeuristicTime() {
 }
 
 function formatCurrency(value) {
-    if (value >= 1000000) {
+    if (value >= 1000000000) {
+        return `$${(value / 1000000000).toFixed(2)}B`;
+    } else if (value >= 1000000) {
         return `$${(value / 1000000).toFixed(2)}M`;
     } else if (value >= 1000) {
         return `$${(value / 1000).toFixed(0)}K`;
@@ -181,7 +183,14 @@ function formatCurrency(value) {
 }
 
 function formatNumber(value) {
-    return value.toLocaleString('en-US');
+    if (value >= 1000000000) {
+        return new Intl.NumberFormat('en-GB', {
+            notation: "compact",
+            compactDisplay: "long",
+            maximumFractionDigits: 2
+        }).format(value);
+    }
+    return value.toLocaleString('en-GB');
 }
 
 function calculateAndRender() {
@@ -319,7 +328,9 @@ function initCharts() {
                     ticks: {
                         callback: function(value, index, values) {
                             // Custom tick formatting for log scale to look cleaner
-                            if (value === 1000 || value === 10000 || value === 100000 || value === 1000000 || value === 10000000) {
+                            // Show powers of 10 starting from 1000 (1k, 10k, ... 1B, etc.)
+                            const log10 = Math.log10(value);
+                            if (value >= 1000 && Math.abs(log10 - Math.round(log10)) < 1e-9) {
                                 return formatCurrency(value);
                             }
                             return null;
@@ -476,7 +487,9 @@ function toggleCostChartScale(isLog) {
     
     if (isLog) {
         costChart.options.scales.y.ticks.callback = function(value, index, values) {
-            if (value === 1000 || value === 10000 || value === 100000 || value === 1000000 || value === 10000000) {
+            // Show powers of 10 starting from 1000 (1k, 10k, ... 1B, etc.)
+            const log10 = Math.log10(value);
+            if (value >= 1000 && Math.abs(log10 - Math.round(log10)) < 1e-9) {
                 return formatCurrency(value);
             }
             return null;
