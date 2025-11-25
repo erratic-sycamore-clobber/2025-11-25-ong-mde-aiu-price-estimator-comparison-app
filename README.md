@@ -1,4 +1,4 @@
-# Value Engineering Analysis: Document Processing
+# AI vs Human Costs for Metadata Extraction | Unofficial Comparison Calculator | ong@box.com | Box Consulting EMEA
 
 A dynamic, browser-based calculator to compare the costs of AI-based document extraction against manual human processing scenarios.
 

@@ -9,6 +9,15 @@ const state = {
 };
 
 // Constants
+const DEFAULTS = {
+    documents: 100000,
+    avgPages: 5,
+    numFields: 10,
+    humanTime: 7.5,
+    minWageRate: 7.25,
+    consultantRate: 200.00
+};
+
 const AIU_PER_PACK = 100000;
 const COST_PER_PACK = 2000;
 const AIU_PER_PAGE = 1;
@@ -44,6 +53,10 @@ function init() {
     // Sync state with initial HTML values
     updateStateFromDOM();
     
+    // Sync display spans with input values (handles browser persistence)
+    inputs.avgPagesDisplay.textContent = inputs.avgPages.value;
+    inputs.numFieldsDisplay.textContent = inputs.numFields.value;
+
     // Calculate initial heuristic time
     calculateHeuristicTime();
 
@@ -62,6 +75,7 @@ function init() {
     inputs.humanTime.addEventListener('input', handleInput);
     inputs.minWageRate.addEventListener('input', handleInput);
     inputs.consultantRate.addEventListener('input', handleInput);
+    document.getElementById('resetBtn').addEventListener('click', resetInputs);
 
     // Initialize Charts
     initCharts();
@@ -71,6 +85,24 @@ function init() {
 }
 
 function handleInput(e) {
+    updateStateFromDOM();
+    calculateAndRender();
+}
+
+function resetInputs() {
+    // Reset DOM elements
+    inputs.documents.value = DEFAULTS.documents;
+    inputs.avgPages.value = DEFAULTS.avgPages;
+    inputs.numFields.value = DEFAULTS.numFields;
+    inputs.humanTime.value = DEFAULTS.humanTime;
+    inputs.minWageRate.value = DEFAULTS.minWageRate;
+    inputs.consultantRate.value = DEFAULTS.consultantRate;
+
+    // Update Range Displays
+    inputs.avgPagesDisplay.textContent = DEFAULTS.avgPages;
+    inputs.numFieldsDisplay.textContent = DEFAULTS.numFields;
+
+    // Update State & Charts
     updateStateFromDOM();
     calculateAndRender();
 }
