@@ -1,11 +1,11 @@
 // State Variables
 const state = {
-    documents: 1000000,
+    documents: 100000,
     pagesPerDoc: 5,
     fieldsPerDoc: 10,
-    humanTimePerDoc: 7.5, // Initial calculation: 10 * 1 + 5 * 0.5 = 12.5 -> user defaulted override in HTML is 7.5, will sync on load
+    humanTimePerDoc: 750, 
     minWageRate: 7.25,
-    consultantRate: 100.00,
+    consultantRate: 200.00,
     aiuPerPage: 1
 };
 
@@ -14,7 +14,7 @@ const DEFAULTS = {
     documents: 100000,
     avgPages: 5,
     numFields: 10,
-    humanTime: 7.5,
+    humanTime: 750,
     minWageRate: 7.25,
     consultantRate: 200.00,
     aiuPerPage: 1
@@ -58,7 +58,12 @@ function loadFromURL() {
     if (params.has('pages')) inputs.avgPages.value = params.get('pages');
     if (params.has('fields')) inputs.numFields.value = params.get('fields');
     if (params.has('agent')) inputs.agentType.value = params.get('agent');
-    if (params.has('time')) inputs.humanTime.value = params.get('time');
+    if (params.has('time')) {
+        const timeSeconds = Number(params.get('time'));
+        if (!isNaN(timeSeconds)) {
+            inputs.humanTime.value = timeSeconds / 60;
+        }
+    }
     if (params.has('rate_std')) inputs.minWageRate.value = params.get('rate_std');
     if (params.has('rate_exp')) inputs.consultantRate.value = params.get('rate_exp');
 
@@ -73,7 +78,7 @@ function updateURL() {
     params.set('pages', inputs.avgPages.value);
     params.set('fields', inputs.numFields.value);
     params.set('agent', inputs.agentType.value);
-    params.set('time', inputs.humanTime.value);
+    params.set('time', state.humanTimePerDoc);
     params.set('rate_std', inputs.minWageRate.value);
     params.set('rate_exp', inputs.consultantRate.value);
 
@@ -140,7 +145,7 @@ function resetInputs() {
     inputs.documents.value = DEFAULTS.documents;
     inputs.avgPages.value = DEFAULTS.avgPages;
     inputs.numFields.value = DEFAULTS.numFields;
-    inputs.humanTime.value = DEFAULTS.humanTime;
+    inputs.humanTime.value = DEFAULTS.humanTime / 60;
     inputs.minWageRate.value = DEFAULTS.minWageRate;
     inputs.consultantRate.value = DEFAULTS.consultantRate;
     inputs.agentType.value = DEFAULTS.aiuPerPage;
@@ -161,19 +166,19 @@ function updateStateFromDOM() {
     state.documents = Number(inputs.documents.value) || 0;
     state.pagesPerDoc = Number(inputs.avgPages.value) || 1;
     state.fieldsPerDoc = Number(inputs.numFields.value) || 5;
-    state.humanTimePerDoc = Number(inputs.humanTime.value) || 0;
+    state.humanTimePerDoc = (Number(inputs.humanTime.value) || 0) * 60;
     state.minWageRate = Number(inputs.minWageRate.value) || 0;
     state.consultantRate = Number(inputs.consultantRate.value) || 0;
     state.aiuPerPage = Number(inputs.agentType.value) || 1;
 }
 
 function calculateHeuristicTime() {
-    // Heuristic: 1 min per field + 0.5 min per page
+    // Heuristic: 60s per field + 30s per page
     // Only update if the user hasn't manually focused the time input recently (simple check)
     // For this MVP, we'll just update the input value to show the suggestion
-    const suggestedTime = (state.fieldsPerDoc * 1) + (state.pagesPerDoc * 0.5);
-    inputs.humanTime.value = suggestedTime;
-    state.humanTimePerDoc = suggestedTime;
+    const suggestedTimeSeconds = (state.fieldsPerDoc * 60) + (state.pagesPerDoc * 30);
+    state.humanTimePerDoc = suggestedTimeSeconds;
+    inputs.humanTime.value = suggestedTimeSeconds / 60;
 }
 
 function formatCurrency(value) {
@@ -200,7 +205,7 @@ function calculateAndRender() {
     const aiCostPerDoc = aiTotalCost / state.documents;
 
     // Human Cost Calculation
-    const totalHumanHours = (state.documents * state.humanTimePerDoc) / 60;
+    const totalHumanHours = (state.documents * state.humanTimePerDoc) / 3600;
     
     // Min Wage
     const minWageTotalCost = totalHumanHours * state.minWageRate;
@@ -213,7 +218,7 @@ function calculateAndRender() {
     // --- Update Summary ---
     outputs.summaryDocs.textContent = formatNumber(state.documents);
     outputs.summaryPages.textContent = formatNumber(totalPages);
-    outputs.summaryTime.textContent = `${state.humanTimePerDoc.toFixed(1)} min/doc`;
+    outputs.summaryTime.textContent = `${(state.humanTimePerDoc / 60).toFixed(1)} min/doc`;
     outputs.summaryAiCost.textContent = formatCurrency(aiTotalCost);
 
     // --- Update Table ---
