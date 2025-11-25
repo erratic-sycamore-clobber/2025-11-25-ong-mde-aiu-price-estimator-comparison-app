@@ -1,24 +1,16 @@
-// State Variables
-const state = {
+// Constants - Single Source of Truth
+const DEFAULTS = {
     documents: 100000,
     pagesPerDoc: 5,
     fieldsPerDoc: 10,
-    humanTimePerDoc: 750, 
+    humanTimePerDoc: 750,
     minWageRate: 7.25,
     consultantRate: 200.00,
     aiuPerPage: 1
 };
 
-// Constants
-const DEFAULTS = {
-    documents: 100000,
-    avgPages: 5,
-    numFields: 10,
-    humanTime: 750,
-    minWageRate: 7.25,
-    consultantRate: 200.00,
-    aiuPerPage: 1
-};
+// State Variables
+let state = { ...DEFAULTS };
 
 const AIU_PER_PACK = 100000;
 const COST_PER_PACK = 2000;
@@ -51,25 +43,35 @@ const outputs = {
 };
 
 // URL State Management
+function syncDomFromState() {
+    inputs.documents.value = state.documents;
+    inputs.avgPages.value = state.pagesPerDoc;
+    inputs.numFields.value = state.fieldsPerDoc;
+    inputs.humanTime.value = state.humanTimePerDoc / 60;
+    inputs.minWageRate.value = state.minWageRate;
+    inputs.consultantRate.value = state.consultantRate;
+    inputs.agentType.value = state.aiuPerPage;
+
+    // Update displays for ranges
+    inputs.avgPagesDisplay.textContent = state.pagesPerDoc;
+    inputs.numFieldsDisplay.textContent = state.fieldsPerDoc;
+}
+
 function loadFromURL() {
     const params = new URLSearchParams(window.location.search);
     
-    if (params.has('docs')) inputs.documents.value = params.get('docs');
-    if (params.has('pages')) inputs.avgPages.value = params.get('pages');
-    if (params.has('fields')) inputs.numFields.value = params.get('fields');
-    if (params.has('agent')) inputs.agentType.value = params.get('agent');
+    if (params.has('docs')) state.documents = Number(params.get('docs'));
+    if (params.has('pages')) state.pagesPerDoc = Number(params.get('pages'));
+    if (params.has('fields')) state.fieldsPerDoc = Number(params.get('fields'));
+    if (params.has('agent')) state.aiuPerPage = Number(params.get('agent'));
     if (params.has('time')) {
         const timeSeconds = Number(params.get('time'));
         if (!isNaN(timeSeconds)) {
-            inputs.humanTime.value = timeSeconds / 60;
+            state.humanTimePerDoc = timeSeconds;
         }
     }
-    if (params.has('rate_std')) inputs.minWageRate.value = params.get('rate_std');
-    if (params.has('rate_exp')) inputs.consultantRate.value = params.get('rate_exp');
-
-    // Update displays for ranges
-    inputs.avgPagesDisplay.textContent = inputs.avgPages.value;
-    inputs.numFieldsDisplay.textContent = inputs.numFields.value;
+    if (params.has('rate_std')) state.minWageRate = Number(params.get('rate_std'));
+    if (params.has('rate_exp')) state.consultantRate = Number(params.get('rate_exp'));
 }
 
 function updateURL() {
@@ -91,12 +93,8 @@ function init() {
     // Load from URL if present
     loadFromURL();
 
-    // Sync state with initial HTML values
-    updateStateFromDOM();
-    
-    // Sync display spans with input values (handles browser persistence)
-    inputs.avgPagesDisplay.textContent = inputs.avgPages.value;
-    inputs.numFieldsDisplay.textContent = inputs.numFields.value;
+    // Sync DOM with current state
+    syncDomFromState();
 
     // Calculate initial heuristic time
     calculateHeuristicTime();
@@ -141,21 +139,13 @@ function handleInput(e) {
 }
 
 function resetInputs() {
-    // Reset DOM elements
-    inputs.documents.value = DEFAULTS.documents;
-    inputs.avgPages.value = DEFAULTS.avgPages;
-    inputs.numFields.value = DEFAULTS.numFields;
-    inputs.humanTime.value = DEFAULTS.humanTime / 60;
-    inputs.minWageRate.value = DEFAULTS.minWageRate;
-    inputs.consultantRate.value = DEFAULTS.consultantRate;
-    inputs.agentType.value = DEFAULTS.aiuPerPage;
+    // Reset State to Defaults
+    state = { ...DEFAULTS };
 
-    // Update Range Displays
-    inputs.avgPagesDisplay.textContent = DEFAULTS.avgPages;
-    inputs.numFieldsDisplay.textContent = DEFAULTS.numFields;
+    // Sync DOM
+    syncDomFromState();
 
-    // Update State & Charts
-    updateStateFromDOM();
+    // Update Charts
     calculateAndRender();
     
     // Clear URL parameters instead of setting them to defaults

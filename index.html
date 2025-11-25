@@ -19,7 +19,7 @@
                     <div class="controls-grid">
                         <div class="control-group">
                             <label for="numDocuments">Number of Documents</label>
-                            <input type="number" id="numDocuments" value="1000000" min="1">
+                            <input type="number" id="numDocuments" min="1">
                         </div>
                         <div class="control-group">
                             <label for="agentType">Extract Agent Type</label>
@@ -32,30 +32,30 @@
                         <div class="control-group">
                             <label for="avgPages">Average Pages per Document</label>
                             <div class="range-container">
-                                <input type="range" id="avgPages" min="1" max="50" value="5">
+                                <input type="range" id="avgPages" min="1" max="50">
                                 <span id="avgPagesDisplay">5</span>
                             </div>
                         </div>
                         <div class="control-group">
                             <label for="numFields">Number of Fields to Extract (5-20)</label>
                             <div class="range-container">
-                                <input type="range" id="numFields" min="5" max="20" value="10">
+                                <input type="range" id="numFields" min="5" max="20">
                                 <span id="numFieldsDisplay">10</span>
                             </div>
                             <small class="note">Updates estimated human time</small>
                         </div>
                         <div class="control-group">
                             <label for="humanTime">Human Processing Time (min/doc)</label>
-                            <input type="number" id="humanTime" value="7.5" step="0.1" min="0.1">
+                            <input type="number" id="humanTime" step="0.1" min="0.1">
                             <small class="note">Calculated: Fields × 1 + Pages × 0.5</small>
                         </div>
                         <div class="control-group">
                             <label for="minWageRate">Standard Hourly Rate ($)</label>
-                            <input type="number" id="minWageRate" value="7.25" step="0.01" min="0">
+                            <input type="number" id="minWageRate" step="0.01" min="0">
                         </div>
                         <div class="control-group">
                             <label for="consultantRate">Expert Hourly Rate ($)</label>
-                            <input type="number" id="consultantRate" value="100.00" step="0.01" min="0">
+                            <input type="number" id="consultantRate" step="0.01" min="0">
                         </div>
                         <div class="control-group">
                             <label style="visibility: hidden;">Reset</label> <!-- Spacer for visual alignment -->
