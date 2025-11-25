@@ -5,7 +5,8 @@ const state = {
     fieldsPerDoc: 10,
     humanTimePerDoc: 7.5, // Initial calculation: 10 * 1 + 5 * 0.5 = 12.5 -> user defaulted override in HTML is 7.5, will sync on load
     minWageRate: 7.25,
-    consultantRate: 100.00
+    consultantRate: 100.00,
+    aiuPerPage: 1
 };
 
 // Constants
@@ -15,12 +16,12 @@ const DEFAULTS = {
     numFields: 10,
     humanTime: 7.5,
     minWageRate: 7.25,
-    consultantRate: 200.00
+    consultantRate: 200.00,
+    aiuPerPage: 1
 };
 
 const AIU_PER_PACK = 100000;
 const COST_PER_PACK = 2000;
-const AIU_PER_PAGE = 1;
 
 // Chart Instances
 let costChart = null;
@@ -36,7 +37,8 @@ const inputs = {
     numFieldsDisplay: document.getElementById('numFieldsDisplay'),
     humanTime: document.getElementById('humanTime'),
     minWageRate: document.getElementById('minWageRate'),
-    consultantRate: document.getElementById('consultantRate')
+    consultantRate: document.getElementById('consultantRate'),
+    agentType: document.getElementById('agentType')
 };
 
 const outputs = {
@@ -48,8 +50,42 @@ const outputs = {
     insightsList: document.getElementById('insightsList')
 };
 
+// URL State Management
+function loadFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    
+    if (params.has('docs')) inputs.documents.value = params.get('docs');
+    if (params.has('pages')) inputs.avgPages.value = params.get('pages');
+    if (params.has('fields')) inputs.numFields.value = params.get('fields');
+    if (params.has('agent')) inputs.agentType.value = params.get('agent');
+    if (params.has('time')) inputs.humanTime.value = params.get('time');
+    if (params.has('rate_std')) inputs.minWageRate.value = params.get('rate_std');
+    if (params.has('rate_exp')) inputs.consultantRate.value = params.get('rate_exp');
+
+    // Update displays for ranges
+    inputs.avgPagesDisplay.textContent = inputs.avgPages.value;
+    inputs.numFieldsDisplay.textContent = inputs.numFields.value;
+}
+
+function updateURL() {
+    const params = new URLSearchParams();
+    params.set('docs', inputs.documents.value);
+    params.set('pages', inputs.avgPages.value);
+    params.set('fields', inputs.numFields.value);
+    params.set('agent', inputs.agentType.value);
+    params.set('time', inputs.humanTime.value);
+    params.set('rate_std', inputs.minWageRate.value);
+    params.set('rate_exp', inputs.consultantRate.value);
+
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState({}, '', newUrl);
+}
+
 // Initialization
 function init() {
+    // Load from URL if present
+    loadFromURL();
+
     // Sync state with initial HTML values
     updateStateFromDOM();
     
@@ -75,7 +111,16 @@ function init() {
     inputs.humanTime.addEventListener('input', handleInput);
     inputs.minWageRate.addEventListener('input', handleInput);
     inputs.consultantRate.addEventListener('input', handleInput);
+    inputs.agentType.addEventListener('change', handleInput);
     document.getElementById('resetBtn').addEventListener('click', resetInputs);
+    
+    // Add log scale toggle listener
+    const logToggle = document.getElementById('logScaleToggle');
+    if (logToggle) {
+        logToggle.addEventListener('change', (e) => {
+            toggleCostChartScale(e.target.checked);
+        });
+    }
 
     // Initialize Charts
     initCharts();
@@ -87,6 +132,7 @@ function init() {
 function handleInput(e) {
     updateStateFromDOM();
     calculateAndRender();
+    updateURL();
 }
 
 function resetInputs() {
@@ -97,6 +143,7 @@ function resetInputs() {
     inputs.humanTime.value = DEFAULTS.humanTime;
     inputs.minWageRate.value = DEFAULTS.minWageRate;
     inputs.consultantRate.value = DEFAULTS.consultantRate;
+    inputs.agentType.value = DEFAULTS.aiuPerPage;
 
     // Update Range Displays
     inputs.avgPagesDisplay.textContent = DEFAULTS.avgPages;
@@ -105,6 +152,9 @@ function resetInputs() {
     // Update State & Charts
     updateStateFromDOM();
     calculateAndRender();
+    
+    // Clear URL parameters instead of setting them to defaults
+    window.history.replaceState({}, '', window.location.pathname);
 }
 
 function updateStateFromDOM() {
@@ -114,6 +164,7 @@ function updateStateFromDOM() {
     state.humanTimePerDoc = Number(inputs.humanTime.value) || 0;
     state.minWageRate = Number(inputs.minWageRate.value) || 0;
     state.consultantRate = Number(inputs.consultantRate.value) || 0;
+    state.aiuPerPage = Number(inputs.agentType.value) || 1;
 }
 
 function calculateHeuristicTime() {
@@ -140,7 +191,7 @@ function formatNumber(value) {
 
 function calculateAndRender() {
     const totalPages = state.documents * state.pagesPerDoc;
-    const totalAIU = totalPages * AIU_PER_PAGE;
+    const totalAIU = totalPages * state.aiuPerPage;
     
     // AI Cost Calculation
     // Packs needed = ceil(Total AIU / AIU per Pack)
@@ -403,7 +454,8 @@ function updateCharts(aiCost, minWageCost, consultantCost) {
     // AI Cost varies with pages
     const pageDataAI = pageLabels.map(pages => {
         const totalP = state.documents * pages;
-        const packs = Math.ceil(totalP / AIU_PER_PACK);
+        const totalAIU = totalP * state.aiuPerPage;
+        const packs = Math.ceil(totalAIU / AIU_PER_PACK);
         return packs * COST_PER_PACK;
     });
 
@@ -421,6 +473,26 @@ function updateCharts(aiCost, minWageCost, consultantCost) {
     pageSensitivityChart.update();
 }
 
+function toggleCostChartScale(isLog) {
+    if (!costChart) return;
+    
+    costChart.options.scales.y.type = isLog ? 'logarithmic' : 'linear';
+    costChart.options.scales.y.title.text = isLog ? 'Cost (Log Scale)' : 'Cost (Linear Scale)';
+    
+    if (isLog) {
+        costChart.options.scales.y.ticks.callback = function(value, index, values) {
+            if (value === 1000 || value === 10000 || value === 100000 || value === 1000000 || value === 10000000) {
+                return formatCurrency(value);
+            }
+            return null;
+        };
+    } else {
+        costChart.options.scales.y.ticks.callback = function(value) {
+            return formatCurrency(value);
+        };
+    }
+    costChart.update();
+}
+
 // Run initialization
 init();
-

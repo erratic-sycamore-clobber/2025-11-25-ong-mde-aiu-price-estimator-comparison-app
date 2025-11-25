@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI vs Human Costs for Metadata Extraction | Unofficial Comparison Calculator | ong@box.com | Box Consulting EMEA</title>
+    <title>AI vs Human Costs for Metadata Extraction | Unofficial Comparison
+        Calculator | ong@box.com | Box Consulting EMEA</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Chart.js CDN -->
     <script src="chart.js"></script>
 </head>
+
 <body>
     <div class="container">
         <div class="app-wrapper">
@@ -25,6 +27,14 @@
                                 <input type="range" id="avgPages" min="1" max="50" value="5">
                                 <span id="avgPagesDisplay">5</span>
                             </div>
+                        </div>
+                        <div class="control-group">
+                            <label for="agentType">Extract Agent Type</label>
+                            <select id="agentType"
+                                style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+                                <option value="1">Standard (1 AIU/page)</option>
+                                <option value="3">Enhanced (3 AIU/page)</option>
+                            </select>
                         </div>
                         <div class="control-group">
                             <label for="numFields">Number of Fields to Extract (5-20)</label>
@@ -49,7 +59,9 @@
                         </div>
                         <div class="control-group">
                             <label style="visibility: hidden;">Reset</label> <!-- Spacer for visual alignment -->
-                            <button id="resetBtn" class="btn-reset" style="width: 100%; padding: 10px; background-color: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; font-weight: 600;">Reset to Defaults</button>
+                            <button id="resetBtn" class="btn-reset"
+                                style="width: 100%; padding: 10px; background-color: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; font-weight: 600;">Reset
+                                to Defaults</button>
                         </div>
                     </div>
                 </section>
@@ -58,8 +70,7 @@
             <main class="main-content">
                 <header>
                     <h1>AI vs Human Costs for Metadata Extraction</h1>
-                    <h2>Unofficial Comparison Calculator</h2>
-                    <p class="subtitle">Project by ong@box.com | Box Consulting EMEA</p>
+                    <p class="subtitle">Unofficial Comparison Calculator</p>
                 </header>
 
                 <!-- Current Scenario Summary -->
@@ -80,6 +91,15 @@
                         <h3>AI Cost</h3>
                         <p id="summaryAiCost">$100,000</p>
                     </div>
+                </section>
+
+
+                <!-- Key Insights -->
+                <section class="insights-section">
+                    <h2>Key Insights</h2>
+                    <ul id="insightsList">
+                        <!-- Insights will be populated by JS -->
+                    </ul>
                 </section>
 
                 <!-- Detailed Comparison Table -->
@@ -107,7 +127,16 @@
                 <!-- Charts Section -->
                 <section class="charts-grid">
                     <div class="chart-card">
-                        <h2>Total Cost Comparison (Log Scale)</h2>
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid var(--border-color); padding-bottom: 10px;">
+                            <h2 style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">Total Cost Comparison
+                            </h2>
+                            <label
+                                style="cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.9rem;">
+                                <input type="checkbox" id="logScaleToggle" checked>
+                                Log Scale
+                            </label>
+                        </div>
                         <div class="chart-container">
                             <canvas id="costChart"></canvas>
                         </div>
@@ -127,19 +156,13 @@
                         <p class="chart-note">AI cost scales with pages; Human time depends on your settings.</p>
                     </div>
                 </section>
-                
-                <!-- Key Insights -->
-                <section class="insights-section">
-                    <h2>Key Insights</h2>
-                    <ul id="insightsList">
-                        <!-- Insights will be populated by JS -->
-                    </ul>
-                </section>
 
                 <footer>
                     <p>&copy; 2025 Box Consulting EMEA. Authored by ong@box.com.</p>
-                    <p>Visualizations powered by <a href="https://www.chartjs.org/" target="_blank" rel="noopener noreferrer">Chart.js</a> (MIT License).</p>
-                    <p class="disclaimer">Licensed under the GNU General Public License. This software is provided "as is", without warranty of any kind, express or implied.</p>
+                    <p>Visualizations powered by <a href="https://www.chartjs.org/" target="_blank"
+                            rel="noopener noreferrer">Chart.js</a> (MIT License).</p>
+                    <p class="disclaimer">Licensed under the GNU General Public License. This software is provided "as
+                        is", without warranty of any kind, express or implied.</p>
                 </footer>
             </main>
         </div>
@@ -147,5 +170,5 @@
 
     <script src="script.js"></script>
 </body>
-</html>
 
+</html>
