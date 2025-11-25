@@ -10,130 +10,135 @@
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>AI vs Human Costs for Metadata Extraction</h1>
-            <h2>Unofficial Comparison Calculator</h2>
-            <p class="subtitle">Project by ong@box.com | Box Consulting EMEA</p>
-        </header>
-
-        <!-- Interactive Controls -->
-        <section class="controls-section">
-            <h2>Scenario Variables</h2>
-            <div class="controls-grid">
-                <div class="control-group">
-                    <label for="numDocuments">Number of Documents</label>
-                    <input type="number" id="numDocuments" value="1000000" min="1">
-                </div>
-                <div class="control-group">
-                    <label for="avgPages">Average Pages per Document</label>
-                    <div class="range-container">
-                        <input type="range" id="avgPages" min="1" max="50" value="5">
-                        <span id="avgPagesDisplay">5</span>
+        <div class="app-wrapper">
+            <aside class="sidebar">
+                <section class="controls-section">
+                    <h2>Inputs</h2>
+                    <div class="controls-grid">
+                        <div class="control-group">
+                            <label for="numDocuments">Number of Documents</label>
+                            <input type="number" id="numDocuments" value="1000000" min="1">
+                        </div>
+                        <div class="control-group">
+                            <label for="avgPages">Average Pages per Document</label>
+                            <div class="range-container">
+                                <input type="range" id="avgPages" min="1" max="50" value="5">
+                                <span id="avgPagesDisplay">5</span>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label for="numFields">Number of Fields to Extract (5-20)</label>
+                            <div class="range-container">
+                                <input type="range" id="numFields" min="5" max="20" value="10">
+                                <span id="numFieldsDisplay">10</span>
+                            </div>
+                            <small class="note">Updates estimated human time</small>
+                        </div>
+                        <div class="control-group">
+                            <label for="humanTime">Human Processing Time (min/doc)</label>
+                            <input type="number" id="humanTime" value="7.5" step="0.1" min="0.1">
+                            <small class="note">Calculated: Fields × 1 + Pages × 0.5</small>
+                        </div>
+                        <div class="control-group">
+                            <label for="minWageRate">Standard Hourly Rate ($)</label>
+                            <input type="number" id="minWageRate" value="7.25" step="0.01" min="0">
+                        </div>
+                        <div class="control-group">
+                            <label for="consultantRate">Expert Hourly Rate ($)</label>
+                            <input type="number" id="consultantRate" value="100.00" step="0.01" min="0">
+                        </div>
                     </div>
-                </div>
-                <div class="control-group">
-                    <label for="numFields">Number of Fields to Extract (5-20)</label>
-                    <div class="range-container">
-                        <input type="range" id="numFields" min="5" max="20" value="10">
-                        <span id="numFieldsDisplay">10</span>
+                </section>
+            </aside>
+
+            <main class="main-content">
+                <header>
+                    <h1>AI vs Human Costs for Metadata Extraction</h1>
+                    <h2>Unofficial Comparison Calculator</h2>
+                    <p class="subtitle">Project by ong@box.com | Box Consulting EMEA</p>
+                </header>
+
+                <!-- Current Scenario Summary -->
+                <section class="summary-section">
+                    <div class="summary-card">
+                        <h3>Total Documents</h3>
+                        <p id="summaryDocs">1,000,000</p>
                     </div>
-                    <small class="note">Updates estimated human time</small>
-                </div>
-                <div class="control-group">
-                    <label for="humanTime">Human Processing Time (min/doc)</label>
-                    <input type="number" id="humanTime" value="7.5" step="0.1" min="0.1">
-                    <small class="note">Calculated: Fields × 1 + Pages × 0.5</small>
-                </div>
-                <div class="control-group">
-                    <label for="minWageRate">Standard Hourly Rate ($)</label>
-                    <input type="number" id="minWageRate" value="7.25" step="0.01" min="0">
-                </div>
-                <div class="control-group">
-                    <label for="consultantRate">Expert Hourly Rate ($)</label>
-                    <input type="number" id="consultantRate" value="100.00" step="0.01" min="0">
-                </div>
-            </div>
-        </section>
+                    <div class="summary-card">
+                        <h3>Total Pages</h3>
+                        <p id="summaryPages">5,000,000</p>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Est. Human Time</h3>
+                        <p id="summaryTime">7.5 min/doc</p>
+                    </div>
+                    <div class="summary-card highlight">
+                        <h3>AI Cost</h3>
+                        <p id="summaryAiCost">$100,000</p>
+                    </div>
+                </section>
 
-        <!-- Current Scenario Summary -->
-        <section class="summary-section">
-            <div class="summary-card">
-                <h3>Total Documents</h3>
-                <p id="summaryDocs">1,000,000</p>
-            </div>
-            <div class="summary-card">
-                <h3>Total Pages</h3>
-                <p id="summaryPages">5,000,000</p>
-            </div>
-            <div class="summary-card">
-                <h3>Est. Human Time</h3>
-                <p id="summaryTime">7.5 min/doc</p>
-            </div>
-            <div class="summary-card highlight">
-                <h3>AI Cost</h3>
-                <p id="summaryAiCost">$100,000</p>
-            </div>
-        </section>
+                <!-- Detailed Comparison Table -->
+                <section class="table-section">
+                    <h2>Detailed Cost Comparison</h2>
+                    <div class="table-wrapper">
+                        <table id="comparisonTable">
+                            <thead>
+                                <tr>
+                                    <th>Method</th>
+                                    <th class="text-right">Rate / Cost Basis</th>
+                                    <th class="text-right">Time Required</th>
+                                    <th class="text-right">Total Cost</th>
+                                    <th class="text-right">Cost per Doc</th>
+                                    <th class="text-right">vs AI Ratio</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Rows will be populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
 
-        <!-- Detailed Comparison Table -->
-        <section class="table-section">
-            <h2>Detailed Cost Comparison</h2>
-            <div class="table-wrapper">
-                <table id="comparisonTable">
-                    <thead>
-                        <tr>
-                            <th>Method</th>
-                            <th class="text-right">Rate / Cost Basis</th>
-                            <th class="text-right">Time Required</th>
-                            <th class="text-right">Total Cost</th>
-                            <th class="text-right">Cost per Doc</th>
-                            <th class="text-right">vs AI Ratio</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Rows will be populated by JS -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
+                <!-- Charts Section -->
+                <section class="charts-grid">
+                    <div class="chart-card">
+                        <h2>Total Cost Comparison (Log Scale)</h2>
+                        <div class="chart-container">
+                            <canvas id="costChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h2>Sensitivity: Processing Time Impact</h2>
+                        <div class="chart-container">
+                            <canvas id="timeSensitivityChart"></canvas>
+                        </div>
+                        <p class="chart-note">Human costs scale linearly with time; AI cost is constant.</p>
+                    </div>
+                    <div class="chart-card">
+                        <h2>Sensitivity: Document Length Impact</h2>
+                        <div class="chart-container">
+                            <canvas id="pageSensitivityChart"></canvas>
+                        </div>
+                        <p class="chart-note">AI cost scales with pages; Human time depends on your settings.</p>
+                    </div>
+                </section>
+                
+                <!-- Key Insights -->
+                <section class="insights-section">
+                    <h2>Key Insights</h2>
+                    <ul id="insightsList">
+                        <!-- Insights will be populated by JS -->
+                    </ul>
+                </section>
 
-        <!-- Charts Section -->
-        <section class="charts-grid">
-            <div class="chart-card">
-                <h2>Total Cost Comparison (Log Scale)</h2>
-                <div class="chart-container">
-                    <canvas id="costChart"></canvas>
-                </div>
-            </div>
-            <div class="chart-card">
-                <h2>Sensitivity: Processing Time Impact</h2>
-                <div class="chart-container">
-                    <canvas id="timeSensitivityChart"></canvas>
-                </div>
-                <p class="chart-note">Human costs scale linearly with time; AI cost is constant.</p>
-            </div>
-            <div class="chart-card">
-                <h2>Sensitivity: Document Length Impact</h2>
-                <div class="chart-container">
-                    <canvas id="pageSensitivityChart"></canvas>
-                </div>
-                <p class="chart-note">AI cost scales with pages; Human time depends on your settings.</p>
-            </div>
-        </section>
-        
-        <!-- Key Insights -->
-        <section class="insights-section">
-            <h2>Key Insights</h2>
-            <ul id="insightsList">
-                <!-- Insights will be populated by JS -->
-            </ul>
-        </section>
-
-        <footer>
-            <p>&copy; 2025 Box Consulting EMEA. Authored by ong@box.com.</p>
-            <p>Visualizations powered by <a href="https://www.chartjs.org/" target="_blank" rel="noopener noreferrer">Chart.js</a> (MIT License).</p>
-            <p class="disclaimer">Licensed under the GNU General Public License. This software is provided "as is", without warranty of any kind, express or implied.</p>
-        </footer>
+                <footer>
+                    <p>&copy; 2025 Box Consulting EMEA. Authored by ong@box.com.</p>
+                    <p>Visualizations powered by <a href="https://www.chartjs.org/" target="_blank" rel="noopener noreferrer">Chart.js</a> (MIT License).</p>
+                    <p class="disclaimer">Licensed under the GNU General Public License. This software is provided "as is", without warranty of any kind, express or implied.</p>
+                </footer>
+            </main>
+        </div>
     </div>
 
     <script src="script.js"></script>

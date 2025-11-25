@@ -24,9 +24,26 @@ body {
 }
 
 .container {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
     padding: 20px;
+}
+
+/* Main Layout */
+.app-wrapper {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+.sidebar {
+    position: sticky;
+    top: 20px;
+}
+
+.main-content {
+    min-width: 0; /* Important for Chart.js resizing */
 }
 
 header {
@@ -63,8 +80,8 @@ h2 {
 }
 
 .controls-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    display: flex;
+    flex-direction: column;
     gap: 20px;
 }
 
@@ -248,7 +265,15 @@ tr:last-child td {
     font-size: 1.1rem;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
+    .app-wrapper {
+        grid-template-columns: 1fr;
+    }
+    
+    .sidebar {
+        position: static; /* Unstick on mobile */
+    }
+
     .charts-grid {
         grid-template-columns: 1fr;
     }
