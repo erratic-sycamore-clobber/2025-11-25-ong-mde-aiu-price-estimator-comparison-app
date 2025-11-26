@@ -6,8 +6,8 @@ const DEFAULTS = {
     humanTimePerDoc: 750,
     minWageRate: 7.25,
     consultantRate: 200.00,
-    enhancedPercentage: 0,
-    imagePercentage: 0
+    enhancedPercentage: 50,
+    imagePercentage: 50
 };
 
 const HEURISTICS = {

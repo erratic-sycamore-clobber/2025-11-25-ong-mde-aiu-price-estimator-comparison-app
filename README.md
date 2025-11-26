@@ -5,12 +5,13 @@ A dynamic, browser-based calculator to compare the costs of AI-based document ex
 ## Features
 
 *   **Real-time Cost Calculation**: Instantly compare AI Unit (AIU) costs vs. Human Labor costs.
-*   **Dynamic Scenarios**: Adjust document volume, average page count, field density, and hourly rates.
+*   **Shareable Scenarios**: URL automatically updates with your current configuration, allowing for easy bookmarking and sharing of cost models.
+*   **Dynamic Scenarios**: Adjust document volume, file type mix (Images vs. Documents), AI model mix (Standard vs. Enhanced), and labor rates.
 *   **Smart Estimation**: Automatically estimates human processing time based on complexity (fields + pages), with manual override available.
 *   **Interactive Visualizations**:
     *   **Total Cost**: Logarithmic scale bar chart.
     *   **Sensitivity Analysis**: Visualize how costs explode with increased processing time or document length.
-*   **Zero Dependencies**: Built with Vanilla JS and CSS (Chart.js loaded via CDN). No build step required.
+*   **Zero Dependencies**: Built with Vanilla JS and CSS (Chart.js included locally). No build steps required.
 
 ## Usage
 
