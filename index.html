@@ -21,20 +21,22 @@
                             <input type="number" id="numDocuments" min="1">
                         </div>
                         <div class="control-group">
-                            <label for="imagePercentage">File Type Split (% Images)</label>
-                            <div class="range-container">
-                                <input type="range" id="imagePercentage" min="0" max="100" value="0">
-                                <span id="imagePercentageDisplay">0%</span>
+                            <label>Document Type Mix</label>
+                            <div class="slider-row">
+                                <span class="slider-label-left">Documents <span id="docPercentageDisplay">100%</span></span>
+                                <input type="range" id="imagePercentage" min="0" max="100" value="0" class="split-slider">
+                                <span class="slider-label-right"><span id="imagePercentageDisplay">0%</span> Images</span>
                             </div>
-                            <small class="note">Images (1 page cost) vs PDF/DOCX (variable)</small>
+                            <small class="note">PDF/DOCX (Variable Pages) vs Images (1 Page)</small>
                         </div>
                         <div class="control-group">
-                            <label for="enhancedPercentage">Agent Mix (% Enhanced)</label>
-                            <div class="range-container">
-                                <input type="range" id="enhancedPercentage" min="0" max="100" value="0">
-                                <span id="enhancedPercentageDisplay">0%</span>
+                            <label>AI Model Mix</label>
+                            <div class="slider-row">
+                                <span class="slider-label-left">Standard <span id="standardPercentageDisplay">100%</span></span>
+                                <input type="range" id="enhancedPercentage" min="0" max="100" value="0" class="split-slider">
+                                <span class="slider-label-right"><span id="enhancedPercentageDisplay">0%</span> Enhanced</span>
                             </div>
-                            <small class="note">Mix of Standard (1 AIU) and Enhanced (3 AIU)</small>
+                            <small class="note">Standard (1 AIU) vs Enhanced (3 AIU)</small>
                         </div>
                         <div class="control-group">
                             <label for="avgPages">Avg Pages (PDF/DOCX only)</label>

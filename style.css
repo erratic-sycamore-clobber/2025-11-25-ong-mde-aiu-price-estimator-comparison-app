@@ -120,6 +120,47 @@ h2 {
     text-align: right;
 }
 
+/* Split Slider Styling */
+.slider-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.split-slider {
+    flex-grow: 1;
+    cursor: pointer;
+}
+
+.slider-label-left,
+.slider-label-right {
+    font-size: 0.8rem;
+    font-weight: 600;
+    min-width: 80px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.slider-label-left {
+    text-align: right;
+    justify-content: flex-end;
+    color: var(--text-muted);
+}
+
+.slider-label-right {
+    text-align: left;
+    justify-content: flex-start;
+    color: var(--text-muted);
+}
+
+.slider-label-left span,
+.slider-label-right span {
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
 .note {
     font-size: 0.75rem;
     color: var(--text-muted);

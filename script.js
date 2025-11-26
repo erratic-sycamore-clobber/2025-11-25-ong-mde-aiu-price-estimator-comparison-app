@@ -33,8 +33,10 @@ const inputs = {
     consultantRate: document.getElementById('consultantRate'),
     enhancedPercentage: document.getElementById('enhancedPercentage'),
     enhancedPercentageDisplay: document.getElementById('enhancedPercentageDisplay'),
+    standardPercentageDisplay: document.getElementById('standardPercentageDisplay'),
     imagePercentage: document.getElementById('imagePercentage'),
-    imagePercentageDisplay: document.getElementById('imagePercentageDisplay')
+    imagePercentageDisplay: document.getElementById('imagePercentageDisplay'),
+    docPercentageDisplay: document.getElementById('docPercentageDisplay')
 };
 
 const outputs = {
@@ -61,7 +63,9 @@ function syncDomFromState() {
     inputs.avgPagesDisplay.textContent = state.pagesPerDoc;
     inputs.numFieldsDisplay.textContent = state.fieldsPerDoc;
     inputs.enhancedPercentageDisplay.textContent = `${state.enhancedPercentage}%`;
+    inputs.standardPercentageDisplay.textContent = `${100 - state.enhancedPercentage}%`;
     inputs.imagePercentageDisplay.textContent = `${state.imagePercentage}%`;
+    inputs.docPercentageDisplay.textContent = `${100 - state.imagePercentage}%`;
 }
 
 function loadFromURL() {
@@ -125,10 +129,12 @@ function init() {
     inputs.consultantRate.addEventListener('input', handleInput);
     inputs.enhancedPercentage.addEventListener('input', (e) => {
         inputs.enhancedPercentageDisplay.textContent = `${e.target.value}%`;
+        inputs.standardPercentageDisplay.textContent = `${100 - e.target.value}%`;
         handleInput(e);
     });
     inputs.imagePercentage.addEventListener('input', (e) => {
         inputs.imagePercentageDisplay.textContent = `${e.target.value}%`;
+        inputs.docPercentageDisplay.textContent = `${100 - e.target.value}%`;
         handleInput(e);
         calculateHeuristicTime(); // Update time estimate when file split changes
     });
