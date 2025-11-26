@@ -85,7 +85,7 @@
 
                 <!-- Current Scenario Summary -->
                 <section class="summary-section">
-                    <div class="summary-card highlight" onclick="showExplanation('roi')" style="cursor: pointer;">
+                    <div class="summary-card highlight" role="button" tabindex="0" data-modal="roi" style="cursor: pointer;">
                         <h3>Projected ROI ⓘ</h3>
                         <div class="stat-split-container">
                             <div class="stat-col">
@@ -99,7 +99,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="summary-card highlight-secondary" onclick="showExplanation('savings')" style="cursor: pointer;">
+                    <div class="summary-card highlight-secondary" role="button" tabindex="0" data-modal="savings" style="cursor: pointer;">
                         <h3>Net Est. Savings ⓘ</h3>
                         <div class="stat-split-container">
                             <div class="stat-col">
@@ -115,12 +115,12 @@
                             </div>
                         </div>
                     </div>
-                    <div class="summary-card" onclick="showExplanation('fte')" style="cursor: pointer;">
+                    <div class="summary-card" role="button" tabindex="0" data-modal="fte" style="cursor: pointer;">
                         <h3>Est. FTEs Required ⓘ</h3>
                         <p id="summaryFTE">0</p>
                         <div id="fteSubtext" class="card-subtext">0 Hours</div>
                     </div>
-                    <div class="summary-card" onclick="showExplanation('breakeven')" style="cursor: pointer;">
+                    <div class="summary-card" role="button" tabindex="0" data-modal="breakeven" style="cursor: pointer;">
                         <h3>Break-Even Volume ⓘ</h3>
                         <div class="stat-split-container">
                             <div class="stat-col">
@@ -134,7 +134,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="summary-card" onclick="showExplanation('ai')" style="cursor: pointer;">
+                    <div class="summary-card" role="button" tabindex="0" data-modal="ai" style="cursor: pointer;">
                         <h3>Est. AI Cost ⓘ</h3>
                         <p id="summaryAiCost">$100,000</p>
                     </div>

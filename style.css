@@ -578,6 +578,13 @@ footer a:hover {
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
+.summary-card:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
 /* New Metrics Styles */
 .multiplier-badge {
     background-color: #d1fae5;
@@ -619,6 +626,10 @@ footer a:hover {
 .stat-value {
     font-size: 1.25rem !important; /* Smaller than the full single value */
     line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }
 
 .stat-separator {
