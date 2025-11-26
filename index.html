@@ -21,7 +21,7 @@
                             <input type="number" id="numDocuments" min="1">
                         </div>
                         <div class="control-group">
-                            <label>Document Type Mix</label>
+                            <label>File Type Mix</label>
                             <input type="range" id="imagePercentage" min="0" max="100" value="0" class="split-slider">
                             <div class="slider-labels-row">
                                 <span class="slider-label-left">Documents <span id="docPercentageDisplay">100%</span></span>
@@ -30,7 +30,7 @@
                             <small class="note">PDF/DOCX (Variable Pages) vs Images (1 Page)</small>
                         </div>
                         <div class="control-group">
-                            <label>AI Model Mix</label>
+                            <label>AI Extraction Model Mix</label>
                             <input type="range" id="enhancedPercentage" min="0" max="100" value="0" class="split-slider">
                             <div class="slider-labels-row">
                                 <span class="slider-label-left">Standard <span id="standardPercentageDisplay">100%</span></span>
@@ -39,7 +39,7 @@
                             <small class="note">Standard (1 AIU) vs Enhanced (3 AIU)</small>
                         </div>
                         <div class="control-group">
-                            <label for="avgPages">Average Page per File (PDF/DOCX only): <span id="avgPagesDisplay">5</span></label>
+                            <label for="avgPages">Average Pages per File (PDF/DOCX only): <span id="avgPagesDisplay">5</span></label>
                             <input type="range" id="avgPages" min="1" max="50" class="split-slider">
                             <div class="slider-labels-row">
                                 <span class="slider-label-left">1</span>
@@ -70,8 +70,7 @@
                         </div>
                         <div class="control-group">
                             <label style="visibility: hidden;">Reset</label> <!-- Spacer for visual alignment -->
-                            <button id="resetBtn" class="btn-reset"
-                                style="width: 100%; padding: 10px; background-color: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; font-weight: 600;">Reset
+                            <button id="resetBtn" class="btn-reset">Reset
                                 to Defaults</button>
                         </div>
                     </div>
@@ -137,12 +136,10 @@
                 <!-- Charts Section -->
                 <section class="charts-grid">
                     <div class="chart-card">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid var(--border-color); padding-bottom: 10px;">
-                            <h2 style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">Total Cost Comparison
+                        <div class="chart-header">
+                            <h2 class="chart-title-override">Total Cost Comparison
                             </h2>
-                            <label
-                                style="cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.9rem;">
+                            <label class="checkbox-label">
                                 <input type="checkbox" id="logScaleToggle" checked>
                                 Log Scale
                             </label>

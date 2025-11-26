@@ -1,6 +1,6 @@
 // Constants - Single Source of Truth
 const DEFAULTS = {
-    documents: 100000,
+    documents: 10000,
     pagesPerDoc: 5,
     fieldsPerDoc: 10,
     humanTimePerDoc: 750,
@@ -8,6 +8,11 @@ const DEFAULTS = {
     consultantRate: 200.00,
     enhancedPercentage: 0,
     imagePercentage: 0
+};
+
+const HEURISTICS = {
+    SECONDS_PER_FIELD: 60,
+    SECONDS_PER_PAGE: 30
 };
 
 // State Variables
@@ -76,12 +81,6 @@ function loadFromURL() {
     if (params.has('fields')) state.fieldsPerDoc = Number(params.get('fields'));
     if (params.has('mix')) state.enhancedPercentage = Number(params.get('mix'));
     if (params.has('img')) state.imagePercentage = Number(params.get('img'));
-    if (params.has('time')) {
-        const timeSeconds = Number(params.get('time'));
-        if (!isNaN(timeSeconds)) {
-            state.humanTimePerDoc = timeSeconds;
-        }
-    }
     if (params.has('rate_std')) state.minWageRate = Number(params.get('rate_std'));
     if (params.has('rate_exp')) state.consultantRate = Number(params.get('rate_exp'));
 }
@@ -93,7 +92,6 @@ function updateURL() {
     params.set('fields', inputs.numFields.value);
     params.set('mix', inputs.enhancedPercentage.value);
     params.set('img', inputs.imagePercentage.value);
-    params.set('time', state.humanTimePerDoc);
     params.set('rate_std', inputs.minWageRate.value);
     params.set('rate_exp', inputs.consultantRate.value);
 
@@ -155,10 +153,22 @@ function init() {
     calculateAndRender();
 }
 
-function handleInput(e) {
+// Utility
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        const context = this;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(context, args), wait);
+    };
+}
+
+const debouncedUpdateURL = debounce(updateURL, 500);
+
+function handleInput() {
     updateStateFromDOM();
     calculateAndRender();
-    updateURL();
+    debouncedUpdateURL();
 }
 
 function resetInputs() {
@@ -197,20 +207,28 @@ function calculateHeuristicTime() {
     // Only update if the user hasn't manually focused the time input recently (simple check)
     // For this MVP, we'll just update the input value to show the suggestion
     const effectivePages = getEffectiveAvgPages(state.pagesPerDoc);
-    const suggestedTimeSeconds = (state.fieldsPerDoc * 60) + (effectivePages * 30);
+    const suggestedTimeSeconds = (state.fieldsPerDoc * HEURISTICS.SECONDS_PER_FIELD) + (effectivePages * HEURISTICS.SECONDS_PER_PAGE);
     state.humanTimePerDoc = suggestedTimeSeconds;
     inputs.humanTime.value = suggestedTimeSeconds / 60;
 }
 
 function formatCurrency(value) {
-    if (value >= 1000000000) {
-        return `$${(value / 1000000000).toFixed(2)}B`;
-    } else if (value >= 1000000) {
-        return `$${(value / 1000000).toFixed(2)}M`;
-    } else if (value >= 1000) {
-        return `$${(value / 1000).toFixed(0)}K`;
-    }
-    return `$${value.toFixed(2)}`;
+    // Match existing behavior: 
+    // >= 1B: 2 decimals, B suffix
+    // >= 1M: 2 decimals, M suffix
+    // >= 1K: 0 decimals, K suffix
+    // < 1K: 2 decimals, no suffix
+    
+    const fractionDigits = (value >= 1000 && value < 1000000) ? 0 : 2;
+    
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        notation: 'compact',
+        compactDisplay: 'short',
+        minimumFractionDigits: fractionDigits,
+        maximumFractionDigits: fractionDigits
+    }).format(value);
 }
 
 function formatNumber(value) {
@@ -221,7 +239,7 @@ function formatNumber(value) {
             maximumFractionDigits: 2
         }).format(value);
     }
-    return value.toLocaleString('en-GB');
+    return new Intl.NumberFormat('en-GB').format(value);
 }
 
 function getEffectiveAiuPerPage() {
