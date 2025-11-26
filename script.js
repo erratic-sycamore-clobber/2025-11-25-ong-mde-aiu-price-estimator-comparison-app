@@ -6,7 +6,7 @@ const DEFAULTS = {
     humanTimePerDoc: 750,
     minWageRate: 7.25,
     consultantRate: 200.00,
-    aiuPerPage: 1
+    enhancedPercentage: 0
 };
 
 // State Variables
@@ -30,7 +30,8 @@ const inputs = {
     humanTime: document.getElementById('humanTime'),
     minWageRate: document.getElementById('minWageRate'),
     consultantRate: document.getElementById('consultantRate'),
-    agentType: document.getElementById('agentType')
+    enhancedPercentage: document.getElementById('enhancedPercentage'),
+    enhancedPercentageDisplay: document.getElementById('enhancedPercentageDisplay')
 };
 
 const outputs = {
@@ -50,11 +51,12 @@ function syncDomFromState() {
     inputs.humanTime.value = state.humanTimePerDoc / 60;
     inputs.minWageRate.value = state.minWageRate;
     inputs.consultantRate.value = state.consultantRate;
-    inputs.agentType.value = state.aiuPerPage;
+    inputs.enhancedPercentage.value = state.enhancedPercentage;
 
     // Update displays for ranges
     inputs.avgPagesDisplay.textContent = state.pagesPerDoc;
     inputs.numFieldsDisplay.textContent = state.fieldsPerDoc;
+    inputs.enhancedPercentageDisplay.textContent = `${state.enhancedPercentage}%`;
 }
 
 function loadFromURL() {
@@ -63,7 +65,7 @@ function loadFromURL() {
     if (params.has('docs')) state.documents = Number(params.get('docs'));
     if (params.has('pages')) state.pagesPerDoc = Number(params.get('pages'));
     if (params.has('fields')) state.fieldsPerDoc = Number(params.get('fields'));
-    if (params.has('agent')) state.aiuPerPage = Number(params.get('agent'));
+    if (params.has('mix')) state.enhancedPercentage = Number(params.get('mix'));
     if (params.has('time')) {
         const timeSeconds = Number(params.get('time'));
         if (!isNaN(timeSeconds)) {
@@ -79,7 +81,7 @@ function updateURL() {
     params.set('docs', inputs.documents.value);
     params.set('pages', inputs.avgPages.value);
     params.set('fields', inputs.numFields.value);
-    params.set('agent', inputs.agentType.value);
+    params.set('mix', inputs.enhancedPercentage.value);
     params.set('time', state.humanTimePerDoc);
     params.set('rate_std', inputs.minWageRate.value);
     params.set('rate_exp', inputs.consultantRate.value);
@@ -114,7 +116,10 @@ function init() {
     inputs.humanTime.addEventListener('input', handleInput);
     inputs.minWageRate.addEventListener('input', handleInput);
     inputs.consultantRate.addEventListener('input', handleInput);
-    inputs.agentType.addEventListener('change', handleInput);
+    inputs.enhancedPercentage.addEventListener('input', (e) => {
+        inputs.enhancedPercentageDisplay.textContent = `${e.target.value}%`;
+        handleInput(e);
+    });
     document.getElementById('resetBtn').addEventListener('click', resetInputs);
     
     // Add log scale toggle listener
@@ -159,7 +164,7 @@ function updateStateFromDOM() {
     state.humanTimePerDoc = (Number(inputs.humanTime.value) || 0) * 60;
     state.minWageRate = Number(inputs.minWageRate.value) || 0;
     state.consultantRate = Number(inputs.consultantRate.value) || 0;
-    state.aiuPerPage = Number(inputs.agentType.value) || 1;
+    state.enhancedPercentage = Number(inputs.enhancedPercentage.value) || 0;
 }
 
 function calculateHeuristicTime() {
@@ -193,9 +198,15 @@ function formatNumber(value) {
     return value.toLocaleString('en-GB');
 }
 
+function getEffectiveAiuPerPage() {
+    const standardRatio = (100 - state.enhancedPercentage) / 100;
+    const enhancedRatio = state.enhancedPercentage / 100;
+    return (1 * standardRatio) + (3 * enhancedRatio);
+}
+
 function calculateAndRender() {
     const totalPages = state.documents * state.pagesPerDoc;
-    const totalAIU = totalPages * state.aiuPerPage;
+    const totalAIU = totalPages * getEffectiveAiuPerPage();
     
     // AI Cost Calculation
     // Packs needed = ceil(Total AIU / AIU per Pack)
@@ -458,9 +469,10 @@ function updateCharts(aiCost, minWageCost, consultantCost) {
     const pageLabels = [1, 5, 10, 20, 50, 100];
     
     // AI Cost varies with pages
+    const effectiveAiu = getEffectiveAiuPerPage();
     const pageDataAI = pageLabels.map(pages => {
         const totalP = state.documents * pages;
-        const totalAIU = totalP * state.aiuPerPage;
+        const totalAIU = totalP * effectiveAiu;
         const packs = Math.ceil(totalAIU / AIU_PER_PACK);
         return packs * COST_PER_PACK;
     });

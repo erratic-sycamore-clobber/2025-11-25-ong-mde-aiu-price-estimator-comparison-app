@@ -21,12 +21,12 @@
                             <input type="number" id="numDocuments" min="1">
                         </div>
                         <div class="control-group">
-                            <label for="agentType">Extract Agent Type</label>
-                            <select id="agentType"
-                                style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
-                                <option value="1">Standard (1 AIU/page)</option>
-                                <option value="3">Enhanced (3 AIU/page)</option>
-                            </select>
+                            <label for="enhancedPercentage">Agent Mix (% Enhanced)</label>
+                            <div class="range-container">
+                                <input type="range" id="enhancedPercentage" min="0" max="100" value="0">
+                                <span id="enhancedPercentageDisplay">0%</span>
+                            </div>
+                            <small class="note">Mix of Standard (1 AIU) and Enhanced (3 AIU)</small>
                         </div>
                         <div class="control-group">
                             <label for="avgPages">Average Pages per Document</label>
