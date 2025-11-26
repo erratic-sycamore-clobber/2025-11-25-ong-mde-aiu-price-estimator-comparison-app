@@ -324,6 +324,16 @@ tr:last-child td {
 .text-warning { color: var(--warning-color); }
 .text-danger { color: var(--danger-color); }
 
+.stat-positive {
+    color: var(--secondary-color);
+    font-size: 1.75rem !important; /* Make slightly larger than standard summary text */
+}
+
+.stat-critical {
+    color: var(--danger-color);
+    font-weight: 800 !important;
+}
+
 /* Charts Section */
 .charts-grid {
     display: grid;

@@ -4,7 +4,7 @@ const DEFAULTS = {
     pagesPerDoc: 5,
     fieldsPerDoc: 10,
     humanTimePerDoc: 750,
-    minWageRate: 7.25,
+    minWageRate: 15.00,
     consultantRate: 200.00,
     enhancedPercentage: 50,
     imagePercentage: 50
@@ -46,8 +46,8 @@ const inputs = {
 
 const outputs = {
     summaryDocs: document.getElementById('summaryDocs'),
-    summaryPages: document.getElementById('summaryPages'),
-    summaryTime: document.getElementById('summaryTime'),
+    summarySavings: document.getElementById('summarySavings'),
+    summaryFTE: document.getElementById('summaryFTE'),
     summaryAiCost: document.getElementById('summaryAiCost'),
     tableBody: document.querySelector('#comparisonTable tbody'),
     insightsList: document.getElementById('insightsList')
@@ -270,10 +270,42 @@ function calculateAndRender() {
     const consultantTotalCost = totalHumanHours * state.consultantRate;
     const consultantCostPerDoc = consultantTotalCost / state.documents;
 
+    // --- New Narrative Metrics ---
+    const netSavingsStandard = minWageTotalCost - aiTotalCost;
+    const netSavingsExpert = consultantTotalCost - aiTotalCost;
+    
+    // ROI = (Net Savings / Investment) * 100
+    // Prevent division by zero if AI cost is 0 (unlikely but safe)
+    const roiStandard = aiTotalCost > 0 ? ((netSavingsStandard / aiTotalCost) * 100) : 0;
+    
+    // FTE Calculation
+    // 2080 hours = 52 weeks * 40 hours
+    const fteCount = totalHumanHours / 2080;
+
     // --- Update Summary ---
     outputs.summaryDocs.textContent = formatNumber(state.documents);
-    outputs.summaryPages.textContent = formatNumber(totalPages);
-    outputs.summaryTime.textContent = `${(state.humanTimePerDoc / 60).toFixed(1)} min/file`;
+    
+    // Net Estimated Savings (Standard)
+    outputs.summarySavings.textContent = formatCurrency(netSavingsStandard);
+    // Color code savings
+    if (netSavingsStandard > 0) {
+        outputs.summarySavings.className = ''; // Reset
+        outputs.summarySavings.classList.add('stat-positive');
+    } else {
+        outputs.summarySavings.className = '';
+        outputs.summarySavings.classList.add('stat-critical');
+    }
+
+    // FTEs Required
+    outputs.summaryFTE.textContent = formatNumber(Math.ceil(fteCount)); 
+    // Color code FTE if high
+    if (fteCount > 5) {
+        outputs.summaryFTE.className = '';
+        outputs.summaryFTE.classList.add('stat-critical');
+    } else {
+        outputs.summaryFTE.className = '';
+    }
+
     outputs.summaryAiCost.textContent = formatCurrency(aiTotalCost);
 
     // --- Update Table ---
@@ -284,6 +316,7 @@ function calculateAndRender() {
             <td class="text-right">Instant</td>
             <td class="text-right fw-bold text-success">${formatCurrency(aiTotalCost)}</td>
             <td class="text-right">$${aiCostPerDoc.toFixed(4)}</td>
+            <td class="text-right">-</td>
             <td class="text-right fw-bold text-success">1.00x</td>
         </tr>
         <tr>
@@ -292,6 +325,7 @@ function calculateAndRender() {
             <td class="text-right">${formatNumber(Math.round(totalHumanHours))} hrs</td>
             <td class="text-right fw-bold text-warning">${formatCurrency(minWageTotalCost)}</td>
             <td class="text-right">$${minWageCostPerDoc.toFixed(4)}</td>
+            <td class="text-right fw-bold ${netSavingsStandard >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(netSavingsStandard)}</td>
             <td class="text-right fw-bold text-warning">${(minWageTotalCost / aiTotalCost).toFixed(2)}x</td>
         </tr>
         <tr>
@@ -300,28 +334,37 @@ function calculateAndRender() {
             <td class="text-right">${formatNumber(Math.round(totalHumanHours))} hrs</td>
             <td class="text-right fw-bold text-danger">${formatCurrency(consultantTotalCost)}</td>
             <td class="text-right">$${consultantCostPerDoc.toFixed(4)}</td>
+            <td class="text-right fw-bold ${netSavingsExpert >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(netSavingsExpert)}</td>
             <td class="text-right fw-bold text-danger">${(consultantTotalCost / aiTotalCost).toFixed(2)}x</td>
         </tr>
     `;
 
     // --- Update Insights ---
-    const yearsWork = (totalHumanHours / 2080).toFixed(1); // 2080 work hours/year
+    // Friendly, professional narrative
     outputs.insightsList.innerHTML = `
         <li>
             <span class="insight-icon text-success">✓</span>
-            <span>AI processing costs <strong>${formatCurrency(aiTotalCost)}</strong> for ${formatNumber(state.documents)} files.</span>
+            <span>
+                <strong>Headline:</strong> Projected <strong>${formatNumber(Math.round(roiStandard))}% ROI</strong> and <strong>${formatCurrency(netSavingsStandard)}</strong> in savings compared to standard manual processing.
+            </span>
         </li>
         <li>
-            <span class="insight-icon text-warning">✓</span>
-            <span>Standard human labor costs <strong>${formatCurrency(minWageTotalCost)}</strong> (${(minWageTotalCost / aiTotalCost).toFixed(1)}x more expensive).</span>
-        </li>
-        <li>
-            <span class="insight-icon text-danger">✓</span>
-            <span>Expert review costs <strong>${formatCurrency(consultantTotalCost)}</strong> (${(consultantTotalCost / aiTotalCost).toFixed(1)}x more expensive).</span>
+            <span class="insight-icon text-warning">⚠</span>
+            <span>
+                <strong>Feasibility:</strong> To match this output manually in one year, you'd need approximately <strong>${formatNumber(Math.ceil(fteCount))} full-time employees</strong> working solely on this task.
+            </span>
         </li>
         <li>
             <span class="insight-icon text-primary">ℹ</span>
-            <span>Manual processing would take approx <strong>${formatNumber(Math.round(totalHumanHours))} hours</strong> (approx. ${yearsWork} person-years).</span>
+            <span>
+                <strong>Pricing Context:</strong> AI costs are estimated using standard $2k data packs (100k units each). Buying in bulk or subscriptions could save even more.
+            </span>
+        </li>
+        <li>
+            <span class="insight-icon text-primary">ℹ</span>
+            <span>
+                Based on your input of <strong>${(state.humanTimePerDoc / 60).toFixed(1)} min/file</strong>, AI processing is <strong>${(minWageCostPerDoc / aiCostPerDoc).toFixed(1)}x cheaper</strong> per document.
+            </span>
         </li>
     `;
 
