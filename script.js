@@ -17,20 +17,21 @@ const HEURISTICS = {
 
 // State Variables
 let state = { ...DEFAULTS };
+let currentMetrics = null;
 
 const AIU_PER_PACK = 100000;
 const COST_PER_PACK = 2000;
 
-    // Chart Instances
-    let costChart = null;
-    let timeSensitivityChart = null;
-    let pageSensitivityChart = null;
+// Chart Instances
+let costChart = null;
+let timeSensitivityChart = null;
+let pageSensitivityChart = null;
 
-    // New FTE Constant: 230 working days * 6 productive hours (8hrs * 0.75)
-    const EFFECTIVE_ANNUAL_HOURS = 1380;
-    
-    // DOM Elements
-    const inputs = {
+// New FTE Constant: 230 working days * 6 productive hours (8hrs * 0.75)
+const EFFECTIVE_ANNUAL_HOURS = 1380;
+
+// DOM Elements
+const inputs = {
     documents: document.getElementById('numDocuments'),
     avgPages: document.getElementById('avgPages'),
     avgPagesDisplay: document.getElementById('avgPagesDisplay'),
@@ -154,7 +155,7 @@ function init() {
     initCharts();
     
     // Initial Calculation & Render
-    calculateAndRender();
+    handleInput();
 }
 
 // Utility
@@ -171,7 +172,9 @@ const debouncedUpdateURL = debounce(updateURL, 500);
 
 function handleInput() {
     updateStateFromDOM();
-    calculateAndRender();
+    currentMetrics = calculateMetrics(state);
+    renderUI(currentMetrics);
+    updateCharts(currentMetrics);
     debouncedUpdateURL();
 }
 
@@ -183,7 +186,7 @@ function resetInputs() {
     syncDomFromState();
 
     // Update Charts
-    calculateAndRender();
+    handleInput();
     
     // Clear URL parameters instead of setting them to defaults
     window.history.replaceState({}, '', window.location.pathname);
@@ -251,27 +254,27 @@ function updateText(id, value) {
     if (el) el.textContent = value;
 }
 
-function calculateAndRender() {
-    const effectiveAvgPages = getEffectiveAvgPages(state.pagesPerDoc);
-    const totalPages = state.documents * effectiveAvgPages;
+function calculateMetrics(currentState) {
+    const effectiveAvgPages = getEffectiveAvgPages(currentState.pagesPerDoc);
+    const totalPages = currentState.documents * effectiveAvgPages;
     const totalAIU = totalPages * getEffectiveAiuPerPage();
     
     // AI Cost Calculation
     // Packs needed = ceil(Total AIU / AIU per Pack)
     const packsNeeded = Math.ceil(totalAIU / AIU_PER_PACK);
     const aiTotalCost = packsNeeded * COST_PER_PACK;
-    const aiCostPerDoc = aiTotalCost / state.documents;
+    const aiCostPerDoc = aiTotalCost / currentState.documents;
 
     // Human Cost Calculation
-    const totalHumanHours = (state.documents * state.humanTimePerDoc) / 3600;
+    const totalHumanHours = (currentState.documents * currentState.humanTimePerDoc) / 3600;
     
     // Min Wage
-    const minWageTotalCost = totalHumanHours * state.minWageRate;
-    const minWageCostPerDoc = minWageTotalCost / state.documents;
+    const minWageTotalCost = totalHumanHours * currentState.minWageRate;
+    const minWageCostPerDoc = minWageTotalCost / currentState.documents;
     
     // Consultant
-    const consultantTotalCost = totalHumanHours * state.consultantRate;
-    const consultantCostPerDoc = consultantTotalCost / state.documents;
+    const consultantTotalCost = totalHumanHours * currentState.consultantRate;
+    const consultantCostPerDoc = consultantTotalCost / currentState.documents;
 
     // --- New Narrative Metrics ---
     const netSavingsStandard = minWageTotalCost - aiTotalCost;
@@ -285,10 +288,7 @@ function calculateAndRender() {
     const efficiencyRatio = aiTotalCost > 0 ? (minWageTotalCost / aiTotalCost) : 0;
 
     // Break-Even Volume
-    // How many docs until manual cost > first pack cost ($2000)?
     // Formula: BreakEvenDocs = FirstPackCost / HumanCostPerDoc
-    // Note: This is a simplification. Strictly it's a step function vs linear line intersection.
-    // But for "Risk Reversal", showing when the *first* pack pays off is the most honest metric.
     const breakEvenDocs = minWageCostPerDoc > 0 ? Math.ceil(COST_PER_PACK / minWageCostPerDoc) : 0;
 
     // FTE Calculation
@@ -297,12 +297,35 @@ function calculateAndRender() {
     // Time Velocity (Years)
     const workingYears = totalHumanHours / EFFECTIVE_ANNUAL_HOURS;
 
+    return {
+        effectiveAvgPages,
+        totalPages,
+        totalAIU,
+        packsNeeded,
+        aiTotalCost,
+        aiCostPerDoc,
+        totalHumanHours,
+        minWageTotalCost,
+        minWageCostPerDoc,
+        consultantTotalCost,
+        consultantCostPerDoc,
+        netSavingsStandard,
+        netSavingsExpert,
+        roiStandard,
+        efficiencyRatio,
+        breakEvenDocs,
+        fteCount,
+        workingYears
+    };
+}
+
+function renderUI(metrics) {
     // --- Update Summary ---
     
     // 1. ROI
-    outputs.summaryROI.textContent = `${formatNumber(Math.round(roiStandard))}%`;
+    outputs.summaryROI.textContent = `${formatNumber(Math.round(metrics.roiStandard))}%`;
     // Color code ROI
-    if (roiStandard > 0) {
+    if (metrics.roiStandard > 0) {
         outputs.summaryROI.className = '';
         outputs.summaryROI.classList.add('stat-positive');
     } else {
@@ -311,12 +334,12 @@ function calculateAndRender() {
     }
 
     // 2. Net Estimated Savings (Standard)
-    outputs.summarySavings.textContent = formatCurrency(netSavingsStandard);
+    outputs.summarySavings.textContent = formatCurrency(metrics.netSavingsStandard);
     // Color code savings
-    if (netSavingsStandard > 0) {
+    if (metrics.netSavingsStandard > 0) {
         outputs.summarySavings.className = ''; 
         outputs.summarySavings.classList.add('stat-positive');
-        outputs.savingsBadge.textContent = `${efficiencyRatio.toFixed(1)}x Cheaper`;
+        outputs.savingsBadge.textContent = `${metrics.efficiencyRatio.toFixed(1)}x Cheaper`;
         outputs.savingsBadge.style.backgroundColor = '#d1fae5'; // Light green
         outputs.savingsBadge.style.color = '#059669';
     } else {
@@ -328,16 +351,16 @@ function calculateAndRender() {
     }
 
     // 3. FTEs Required
-    outputs.summaryFTE.textContent = formatNumber(Math.ceil(fteCount)); 
+    outputs.summaryFTE.textContent = formatNumber(Math.ceil(metrics.fteCount)); 
     // Update subtext with hours/years
-    if (totalHumanHours > EFFECTIVE_ANNUAL_HOURS) {
-         outputs.fteSubtext.textContent = `approx ${workingYears.toFixed(1)} Years`;
+    if (metrics.totalHumanHours > EFFECTIVE_ANNUAL_HOURS) {
+         outputs.fteSubtext.textContent = `approx ${metrics.workingYears.toFixed(1)} Years`;
     } else {
-         outputs.fteSubtext.textContent = `${formatNumber(Math.round(totalHumanHours))} Hours`;
+         outputs.fteSubtext.textContent = `${formatNumber(Math.round(metrics.totalHumanHours))} Hours`;
     }
     
     // Color code FTE if high
-    if (fteCount > 5) {
+    if (metrics.fteCount > 5) {
         outputs.summaryFTE.className = '';
         outputs.summaryFTE.classList.add('stat-critical');
     } else {
@@ -345,58 +368,55 @@ function calculateAndRender() {
     }
 
     // 4. Break-Even
-    outputs.summaryBreakEven.textContent = `${formatNumber(breakEvenDocs)} Files`;
+    outputs.summaryBreakEven.textContent = `${formatNumber(metrics.breakEvenDocs)} Files`;
 
     // 5. AI Cost
-    outputs.summaryAiCost.textContent = formatCurrency(aiTotalCost);
+    outputs.summaryAiCost.textContent = formatCurrency(metrics.aiTotalCost);
 
     // --- Update Table ---
     // AI Row
     updateText('table-ai-pack-cost', formatNumber(COST_PER_PACK));
-    updateText('table-ai-total-cost', formatCurrency(aiTotalCost));
-    updateText('table-ai-cost-per-doc', '$' + aiCostPerDoc.toFixed(4));
+    updateText('table-ai-total-cost', formatCurrency(metrics.aiTotalCost));
+    updateText('table-ai-cost-per-doc', '$' + metrics.aiCostPerDoc.toFixed(4));
 
     // Human Standard Row
     updateText('table-human-std-rate', state.minWageRate.toFixed(2));
-    updateText('table-human-std-hours', formatNumber(Math.round(totalHumanHours)));
-    updateText('table-human-std-total', formatCurrency(minWageTotalCost));
-    updateText('table-human-std-cost-per-doc', '$' + minWageCostPerDoc.toFixed(4));
+    updateText('table-human-std-hours', formatNumber(Math.round(metrics.totalHumanHours)));
+    updateText('table-human-std-total', formatCurrency(metrics.minWageTotalCost));
+    updateText('table-human-std-cost-per-doc', '$' + metrics.minWageCostPerDoc.toFixed(4));
     
     const stdSavingsEl = document.getElementById('table-human-std-savings');
     if (stdSavingsEl) {
-        stdSavingsEl.textContent = formatCurrency(netSavingsStandard);
+        stdSavingsEl.textContent = formatCurrency(metrics.netSavingsStandard);
         // Reset classes and add base classes
         stdSavingsEl.className = 'text-right fw-bold';
-        stdSavingsEl.classList.add(netSavingsStandard >= 0 ? 'text-success' : 'text-danger');
+        stdSavingsEl.classList.add(metrics.netSavingsStandard >= 0 ? 'text-success' : 'text-danger');
     }
 
-    updateText('table-human-std-ratio', (minWageTotalCost / aiTotalCost).toFixed(2) + 'x');
+    updateText('table-human-std-ratio', (metrics.minWageTotalCost / metrics.aiTotalCost).toFixed(2) + 'x');
 
     // Human Expert Row
     updateText('table-human-exp-rate', state.consultantRate.toFixed(2));
-    updateText('table-human-exp-hours', formatNumber(Math.round(totalHumanHours)));
-    updateText('table-human-exp-total', formatCurrency(consultantTotalCost));
-    updateText('table-human-exp-cost-per-doc', '$' + consultantCostPerDoc.toFixed(4));
+    updateText('table-human-exp-hours', formatNumber(Math.round(metrics.totalHumanHours)));
+    updateText('table-human-exp-total', formatCurrency(metrics.consultantTotalCost));
+    updateText('table-human-exp-cost-per-doc', '$' + metrics.consultantCostPerDoc.toFixed(4));
 
     const expSavingsEl = document.getElementById('table-human-exp-savings');
     if (expSavingsEl) {
-        expSavingsEl.textContent = formatCurrency(netSavingsExpert);
+        expSavingsEl.textContent = formatCurrency(metrics.netSavingsExpert);
         // Reset classes and add base classes
         expSavingsEl.className = 'text-right fw-bold';
-        expSavingsEl.classList.add(netSavingsExpert >= 0 ? 'text-success' : 'text-danger');
+        expSavingsEl.classList.add(metrics.netSavingsExpert >= 0 ? 'text-success' : 'text-danger');
     }
 
-    updateText('table-human-exp-ratio', (consultantTotalCost / aiTotalCost).toFixed(2) + 'x');
+    updateText('table-human-exp-ratio', (metrics.consultantTotalCost / metrics.aiTotalCost).toFixed(2) + 'x');
 
     // --- Update Insights ---
-    updateText('insight-roi', formatNumber(Math.round(roiStandard)) + '%');
-    updateText('insight-savings', formatCurrency(netSavingsStandard));
-    updateText('insight-fte', formatNumber(Math.ceil(fteCount)));
+    updateText('insight-roi', formatNumber(Math.round(metrics.roiStandard)) + '%');
+    updateText('insight-savings', formatCurrency(metrics.netSavingsStandard));
+    updateText('insight-fte', formatNumber(Math.ceil(metrics.fteCount)));
     updateText('insight-time-per-doc', (state.humanTimePerDoc / 60).toFixed(1));
-    updateText('insight-cheaper-ratio', aiCostPerDoc > 0 ? (minWageCostPerDoc / aiCostPerDoc).toFixed(1) : '0');
-
-    // --- Update Charts ---
-    updateCharts(aiTotalCost, minWageTotalCost, consultantTotalCost);
+    updateText('insight-cheaper-ratio', metrics.aiCostPerDoc > 0 ? (metrics.minWageCostPerDoc / metrics.aiCostPerDoc).toFixed(1) : '0');
 }
 
 function createChartConfig(type, labels, datasets, extraOptions = {}) {
@@ -495,7 +515,67 @@ function initCharts() {
 
 // --- Modal Logic ---
 
+const MODAL_CONFIGS = {
+    roi: {
+        title: 'Projected ROI Breakdown',
+        id: 'modal-content-roi',
+        update: (d) => {
+            updateText('modal-roi-human-cost', formatCurrency(d.minWageTotalCost));
+            updateText('modal-roi-ai-cost', formatCurrency(d.aiTotalCost));
+            updateText('modal-roi-net-savings', formatCurrency(d.netSavingsStandard));
+            updateText('modal-roi-ai-cost-base', formatCurrency(d.aiTotalCost));
+            updateText('modal-roi-value', formatNumber(Math.round(d.roiStandard)) + '%');
+        }
+    },
+    savings: {
+        title: 'Net Estimated Savings Breakdown',
+        id: 'modal-content-savings',
+        update: (d) => {
+            updateText('modal-savings-ratio', d.efficiencyRatio.toFixed(1));
+            updateText('modal-savings-hours', formatNumber(Math.round(d.totalHumanHours)));
+            updateText('modal-savings-rate', state.minWageRate.toFixed(2));
+            updateText('modal-savings-human-total', formatCurrency(d.minWageTotalCost));
+            updateText('modal-savings-aiu', formatNumber(Math.ceil(d.totalAIU)));
+            updateText('modal-savings-packs', d.packsNeeded);
+            updateText('modal-savings-ai-total', formatCurrency(d.aiTotalCost));
+            updateText('modal-savings-net', formatCurrency(d.netSavingsStandard));
+        }
+    },
+    breakeven: {
+        title: 'Break-Even Volume Analysis',
+        id: 'modal-content-breakeven',
+        update: (d) => {
+            updateText('modal-breakeven-manual-cost', d.minWageCostPerDoc.toFixed(4));
+            updateText('modal-breakeven-docs', formatNumber(d.breakEvenDocs));
+        }
+    },
+    fte: {
+        title: 'Est. FTEs Required Breakdown',
+        id: 'modal-content-fte',
+        update: (d) => {
+            updateText('modal-fte-docs', formatNumber(state.documents));
+            updateText('modal-fte-time-per-doc', (state.humanTimePerDoc / 60).toFixed(1));
+            updateText('modal-fte-total-hours', formatNumber(Math.round(d.totalHumanHours)));
+            updateText('modal-fte-count', formatNumber(Math.ceil(d.fteCount)));
+            updateText('modal-fte-years', d.workingYears.toFixed(1));
+        }
+    },
+    ai: {
+        title: 'Est. AI Cost Breakdown',
+        id: 'modal-content-ai',
+        update: (d) => {
+            updateText('modal-ai-pages', formatNumber(Math.ceil(d.totalPages)));
+            updateText('modal-ai-aiu-per-page', getEffectiveAiuPerPage().toFixed(2));
+            updateText('modal-ai-total-aiu', formatNumber(Math.ceil(d.totalAIU)));
+            updateText('modal-ai-packs', d.packsNeeded);
+            updateText('modal-ai-total-cost', formatCurrency(d.aiTotalCost));
+        }
+    }
+};
+
 function showExplanation(metric) {
+    if (!currentMetrics) return;
+
     const modal = document.getElementById('explanationModal');
     const modalTitle = document.getElementById('modalTitle');
     const closeBtn = document.querySelector('.close-modal');
@@ -506,104 +586,24 @@ function showExplanation(metric) {
 
     document.querySelectorAll('.modal-scenario').forEach(el => el.hidden = true);
 
-    // Calculations
-    const effectiveAvgPages = getEffectiveAvgPages(state.pagesPerDoc);
-    const totalPages = state.documents * effectiveAvgPages;
-    const totalAIU = totalPages * getEffectiveAiuPerPage();
-    const packsNeeded = Math.ceil(totalAIU / AIU_PER_PACK);
-    const aiTotalCost = packsNeeded * COST_PER_PACK;
-    
-    const totalHumanHours = (state.documents * state.humanTimePerDoc) / 3600;
-    const minWageTotalCost = totalHumanHours * state.minWageRate;
-    const netSavings = minWageTotalCost - aiTotalCost;
-    const fteCount = totalHumanHours / EFFECTIVE_ANNUAL_HOURS;
-    const efficiencyRatio = aiTotalCost > 0 ? (minWageTotalCost / aiTotalCost) : 0;
-
-    const data = {
-        aiTotalCost, minWageTotalCost, netSavings, totalHumanHours, 
-        totalAIU, packsNeeded, fteCount, efficiencyRatio, totalPages
-    };
-
-    const configs = {
-        roi: {
-            title: 'Projected ROI Breakdown',
-            id: 'modal-content-roi',
-            update: (d) => {
-                const roi = d.aiTotalCost > 0 ? ((d.netSavings / d.aiTotalCost) * 100) : 0;
-                updateText('modal-roi-human-cost', formatCurrency(d.minWageTotalCost));
-                updateText('modal-roi-ai-cost', formatCurrency(d.aiTotalCost));
-                updateText('modal-roi-net-savings', formatCurrency(d.netSavings));
-                updateText('modal-roi-ai-cost-base', formatCurrency(d.aiTotalCost));
-                updateText('modal-roi-value', formatNumber(Math.round(roi)) + '%');
-            }
-        },
-        savings: {
-            title: 'Net Estimated Savings Breakdown',
-            id: 'modal-content-savings',
-            update: (d) => {
-                updateText('modal-savings-ratio', d.efficiencyRatio.toFixed(1));
-                updateText('modal-savings-hours', formatNumber(Math.round(d.totalHumanHours)));
-                updateText('modal-savings-rate', state.minWageRate.toFixed(2));
-                updateText('modal-savings-human-total', formatCurrency(d.minWageTotalCost));
-                updateText('modal-savings-aiu', formatNumber(Math.ceil(d.totalAIU)));
-                updateText('modal-savings-packs', d.packsNeeded);
-                updateText('modal-savings-ai-total', formatCurrency(d.aiTotalCost));
-                updateText('modal-savings-net', formatCurrency(d.netSavings));
-            }
-        },
-        breakeven: {
-            title: 'Break-Even Volume Analysis',
-            id: 'modal-content-breakeven',
-            update: (d) => {
-                const minWageCostPerDoc = d.minWageTotalCost / state.documents;
-                const breakEvenDocs = minWageCostPerDoc > 0 ? Math.ceil(COST_PER_PACK / minWageCostPerDoc) : 0;
-                updateText('modal-breakeven-manual-cost', minWageCostPerDoc.toFixed(4));
-                updateText('modal-breakeven-docs', formatNumber(breakEvenDocs));
-            }
-        },
-        fte: {
-            title: 'Est. FTEs Required Breakdown',
-            id: 'modal-content-fte',
-            update: (d) => {
-                const years = d.totalHumanHours / EFFECTIVE_ANNUAL_HOURS;
-                updateText('modal-fte-docs', formatNumber(state.documents));
-                updateText('modal-fte-time-per-doc', (state.humanTimePerDoc / 60).toFixed(1));
-                updateText('modal-fte-total-hours', formatNumber(Math.round(d.totalHumanHours)));
-                updateText('modal-fte-count', formatNumber(Math.ceil(d.fteCount)));
-                updateText('modal-fte-years', years.toFixed(1));
-            }
-        },
-        ai: {
-            title: 'Est. AI Cost Breakdown',
-            id: 'modal-content-ai',
-            update: (d) => {
-                updateText('modal-ai-pages', formatNumber(Math.ceil(d.totalPages)));
-                updateText('modal-ai-aiu-per-page', getEffectiveAiuPerPage().toFixed(2));
-                updateText('modal-ai-total-aiu', formatNumber(Math.ceil(d.totalAIU)));
-                updateText('modal-ai-packs', d.packsNeeded);
-                updateText('modal-ai-total-cost', formatCurrency(d.aiTotalCost));
-            }
-        }
-    };
-
-    const config = configs[metric];
+    const config = MODAL_CONFIGS[metric];
     if (config) {
         modalTitle.textContent = config.title;
         document.getElementById(config.id).hidden = false;
-        config.update(data);
+        config.update(currentMetrics);
         modal.showModal();
     }
 }
 
-function updateCharts(aiCost, minWageCost, consultantCost) {
+function updateCharts(metrics) {
     // 1. Update Bar Chart
-    costChart.data.datasets[0].data = [aiCost, minWageCost, consultantCost];
+    costChart.data.datasets[0].data = [metrics.aiTotalCost, metrics.minWageTotalCost, metrics.consultantTotalCost];
     costChart.update();
 
     // 2. Update Time Sensitivity Data
     // Generate data points: 1min to 30min
     const timeLabels = [1, 5, 10, 15, 20, 30];
-    const timeDataAI = timeLabels.map(() => aiCost); // Constant
+    const timeDataAI = timeLabels.map(() => metrics.aiTotalCost); // Constant
     const timeDataMinWage = timeLabels.map(min => {
         const hours = (state.documents * min) / 60;
         return hours * state.minWageRate;
@@ -634,11 +634,8 @@ function updateCharts(aiCost, minWageCost, consultantCost) {
     });
 
     // Human Cost is nominally constant relative to page count in this specific isolation view
-    // (Unless we dynamically update the time-per-doc assumption inside the loop, which makes it complex.
-    //  Usually sensitivity charts vary one variable while holding others constant.
-    //  So we hold 'current estimated time' constant to show just the impact of page count on AI cost.)
-    const pageDataMinWage = pageLabels.map(() => minWageCost);
-    const pageDataConsultant = pageLabels.map(() => consultantCost);
+    const pageDataMinWage = pageLabels.map(() => metrics.minWageTotalCost);
+    const pageDataConsultant = pageLabels.map(() => metrics.consultantTotalCost);
 
     pageSensitivityChart.data.labels = pageLabels;
     pageSensitivityChart.data.datasets[0].data = pageDataAI;
