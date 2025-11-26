@@ -113,7 +113,30 @@
                 <section class="insights-section">
                     <h2>Key Insights</h2>
                     <ul id="insightsList">
-                        <!-- Insights will be populated by JS -->
+                        <li>
+                            <span class="insight-icon text-success">✓</span>
+                            <span>
+                                <strong>Headline:</strong> Projected <strong><span id="insight-roi">0%</span> ROI</strong> and <strong><span id="insight-savings">$0</span></strong> in savings compared to standard manual processing.
+                            </span>
+                        </li>
+                        <li>
+                            <span class="insight-icon text-warning">⚠</span>
+                            <span>
+                                <strong>Feasibility:</strong> To match this output manually in one year, you'd need approximately <strong><span id="insight-fte">0</span> full-time employees</strong> working solely on this task.
+                            </span>
+                        </li>
+                        <li>
+                            <span class="insight-icon text-primary">ℹ</span>
+                            <span>
+                                <strong>Pricing Context:</strong> AI costs are estimated using standard $2k data packs (100k units each). Buying in bulk or subscriptions could save even more.
+                            </span>
+                        </li>
+                        <li>
+                            <span class="insight-icon text-primary">ℹ</span>
+                            <span>
+                                Based on your input of <strong><span id="insight-time-per-doc">0</span> min/file</strong>, AI processing is <strong><span id="insight-cheaper-ratio">0</span>x cheaper</strong> per document.
+                            </span>
+                        </li>
                     </ul>
                 </section>
 
@@ -134,7 +157,33 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <!-- Rows will be populated by JS -->
+                                <tr>
+                                    <td class="fw-bold">AI Processing</td>
+                                    <td class="text-right">$<span id="table-ai-pack-cost">2000</span> / 100k AIU</td>
+                                    <td class="text-right">Instant</td>
+                                    <td class="text-right fw-bold text-success" id="table-ai-total-cost">$0</td>
+                                    <td class="text-right" id="table-ai-cost-per-doc">$0.0000</td>
+                                    <td class="text-right">-</td>
+                                    <td class="text-right fw-bold text-success">1.00x</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Human (Standard)</td>
+                                    <td class="text-right">$<span id="table-human-std-rate">15.00</span> / hr</td>
+                                    <td class="text-right"><span id="table-human-std-hours">0</span> hrs</td>
+                                    <td class="text-right fw-bold text-warning" id="table-human-std-total">$0</td>
+                                    <td class="text-right" id="table-human-std-cost-per-doc">$0.0000</td>
+                                    <td class="text-right fw-bold" id="table-human-std-savings">$0</td>
+                                    <td class="text-right fw-bold text-warning" id="table-human-std-ratio">0.00x</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Human (Expert)</td>
+                                    <td class="text-right">$<span id="table-human-exp-rate">200.00</span> / hr</td>
+                                    <td class="text-right"><span id="table-human-exp-hours">0</span> hrs</td>
+                                    <td class="text-right fw-bold text-danger" id="table-human-exp-total">$0</td>
+                                    <td class="text-right" id="table-human-exp-cost-per-doc">$0.0000</td>
+                                    <td class="text-right fw-bold" id="table-human-exp-savings">$0</td>
+                                    <td class="text-right fw-bold text-danger" id="table-human-exp-ratio">0.00x</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -190,7 +239,177 @@
                 <button class="close-modal" aria-label="Close modal">&times;</button>
             </div>
             <div class="modal-body" id="modalBody">
-                <!-- Dynamic Content -->
+                <!-- ROI Modal Content -->
+                <div id="modal-content-roi" class="modal-scenario" hidden>
+                    <p class="explanation-text">
+                        <strong>Return on Investment (ROI)</strong> is calculated based on <strong>Labor Cost Avoidance</strong>. 
+                        <br><br>
+                        It strictly measures the hard dollar savings of using AI versus paying for manual labor at your specified rates. It does not include "soft" benefits like faster turnaround or reduced error rates, making this a conservative estimate.
+                    </p>
+                    <div class="math-row">
+                        <span class="math-label">Total Human Cost (Liability):</span>
+                        <span class="math-value" id="modal-roi-human-cost">$0</span>
+                    </div>
+                    <div class="math-row">
+                        <span class="math-label">Total AI Cost (Investment):</span>
+                        <span class="math-value">- <span id="modal-roi-ai-cost">$0</span></span>
+                    </div>
+                    <div class="math-row">
+                        <span class="math-label"><strong>Net Savings:</strong></span>
+                        <span class="math-value"><strong><span id="modal-roi-net-savings">$0</span></strong></span>
+                    </div>
+                    <br>
+                    <div class="math-row">
+                        <span class="math-label">Investment Base:</span>
+                        <span class="math-value">÷ <span id="modal-roi-ai-cost-base">$0</span></span>
+                    </div>
+                    <div class="math-row">
+                        <span class="math-label" style="color: var(--secondary-color);"><strong>Projected ROI:</strong></span>
+                        <span class="math-value" style="color: var(--secondary-color);"><strong><span id="modal-roi-value">0%</span></strong></span>
+                    </div>
+                </div>
+
+                <!-- Savings Modal Content -->
+                <div id="modal-content-savings" class="modal-scenario" hidden>
+                    <p class="explanation-text">
+                        <strong>Net Estimated Savings</strong> represents the direct financial advantage of using AI over standard manual entry. 
+                        <br><br>
+                        The <strong>Efficiency Multiplier</strong> (e.g., "<span id="modal-savings-ratio">1.0</span>x") shows how many times more expensive it is to stick with the manual process.
+                    </p>
+                    <div class="math-row">
+                        <span class="math-label">Total Human Hours:</span>
+                        <span class="math-value"><span id="modal-savings-hours">0</span> hrs</span>
+                    </div>
+                    <div class="math-row">
+                        <span class="math-label">Standard Hourly Rate:</span>
+                        <span class="math-value">$<span id="modal-savings-rate">15.00</span> / hr</span>
+                    </div>
+                    <div class="math-row">
+                        <span class="math-label"><strong>Total Human Cost:</strong></span>
+                        <span class="math-value"><strong><span id="modal-savings-human-total">$0</span></strong></span>
+                    </div>
+                    <br>
+                    <div class="math-row">
+                        <span class="math-label">Total AI Units:</span>
+                        <span class="math-value"><span id="modal-savings-aiu">0</span> AIU</span>
+                    </div>
+                     <div class="math-row">
+                        <span class="math-label">Packs Needed (100k/pack):</span>
+                        <span class="math-value"><span id="modal-savings-packs">0</span> packs</span>
+                    </div>
+                    <div class="math-row">
+                        <span class="math-label">Cost per Pack:</span>
+                        <span class="math-value">$2,000</span>
+                    </div>
+                    <div class="math-row">
+                        <span class="math-label"><strong>Total AI Cost:</strong></span>
+                        <span class="math-value"><strong><span id="modal-savings-ai-total">$0</span></strong></span>
+                    </div>
+                    <div class="math-row">
+                        <span class="math-label" style="color: var(--secondary-color);"><strong>Net Savings:</strong></span>
+                        <span class="math-value" style="color: var(--secondary-color);"><strong><span id="modal-savings-net">$0</span></strong></span>
+                    </div>
+                </div>
+
+                <!-- Break-Even Modal Content -->
+                <div id="modal-content-breakeven" class="modal-scenario" hidden>
+                    <p class="explanation-text">
+                        <strong>Break-Even Volume</strong> answers the question: "When does this investment pay for itself?"
+                        <br><br>
+                        It calculates how many documents you need to process manually before that cost exceeds the price of a single AI Pack ($2,000). Any volume above this number is pure savings.
+                    </p>
+                     <div class="math-row">
+                        <span class="math-label">Cost of 1 AI Pack:</span>
+                        <span class="math-value">$2,000</span>
+                    </div>
+                    <div class="math-row">
+                        <span class="math-label">Manual Cost per File:</span>
+                        <span class="math-value">÷ $<span id="modal-breakeven-manual-cost">0.0000</span></span>
+                    </div>
+                    <div class="math-row">
+                        <span class="math-label" style="color: var(--secondary-color);"><strong>Break-Even Point:</strong></span>
+                        <span class="math-value" style="color: var(--secondary-color);"><strong><span id="modal-breakeven-docs">0</span> Files</strong></span>
+                    </div>
+                    <p class="note" style="margin-top: 15px;">
+                        Note: This assumes you purchase 1 pack to start.
+                    </p>
+                </div>
+
+                <!-- FTE Modal Content -->
+                <div id="modal-content-fte" class="modal-scenario" hidden>
+                    <p class="explanation-text">
+                        <strong>Full-Time Equivalent (FTE)</strong> estimates the headcount needed.
+                        <br>
+                        <strong>Time Velocity</strong> (Working Years) highlights the opportunity cost of time.
+                        <br><br>
+                        We use a realistic annual capacity of <strong>1,380 hours</strong> per employee (taking into account PTO and 75% productivity).
+                    </p>
+                    <div class="math-row">
+                        <span class="math-label">Total Documents:</span>
+                        <span class="math-value" id="modal-fte-docs">0</span>
+                    </div>
+                     <div class="math-row">
+                        <span class="math-label">Time per Document:</span>
+                        <span class="math-value"><span id="modal-fte-time-per-doc">0</span> min</span>
+                    </div>
+                    <div class="math-row">
+                        <span class="math-label"><strong>Total Workload Hours:</strong></span>
+                        <span class="math-value"><strong><span id="modal-fte-total-hours">0</span> hrs</strong></span>
+                    </div>
+                    <br>
+                    <div class="math-row">
+                        <span class="math-label">Effective Annual Hours/FTE:</span>
+                        <span class="math-value">÷ 1,380 hrs</span>
+                    </div>
+                    <div class="math-row">
+                        <span class="math-label" style="color: var(--danger-color);"><strong>FTEs Required:</strong></span>
+                        <span class="math-value" style="color: var(--danger-color);"><strong><span id="modal-fte-count">0</span></strong></span>
+                    </div>
+                    <div class="math-row">
+                        <span class="math-label"><strong>Equivalent Time:</strong></span>
+                        <span class="math-value"><strong><span id="modal-fte-years">0</span> Years</strong></span>
+                    </div>
+                </div>
+
+                <!-- AI Cost Modal Content -->
+                <div id="modal-content-ai" class="modal-scenario" hidden>
+                    <p class="explanation-text">
+                        AI costs are calculated based on a <strong>"Lump Sum" purchase model</strong>. 
+                        Credits are purchased in minimum blocks (packs) of 100,000 AI Units (AIU).
+                        <br><br>
+                        • Standard Page = 1 AIU
+                        <br>• Enhanced Page = 3 AIU (for complex layouts/handwriting)
+                    </p>
+                    <div class="math-row">
+                        <span class="math-label">Total Pages:</span>
+                        <span class="math-value" id="modal-ai-pages">0</span>
+                    </div>
+                    <div class="math-row">
+                        <span class="math-label">Effective AIU per Page:</span>
+                        <span class="math-value">× <span id="modal-ai-aiu-per-page">0.00</span></span>
+                    </div>
+                    <div class="math-row">
+                        <span class="math-label"><strong>Total AI Units Needed:</strong></span>
+                        <span class="math-value"><strong><span id="modal-ai-total-aiu">0</span></strong></span>
+                    </div>
+                    <br>
+                    <div class="math-row">
+                        <span class="math-label">AI Units per Pack:</span>
+                        <span class="math-value">÷ 100,000</span>
+                    </div>
+                     <div class="math-row">
+                        <span class="math-label">Packs Required (Rounded Up):</span>
+                        <span class="math-value" id="modal-ai-packs">0</span>
+                    </div>
+                     <div class="math-row">
+                        <span class="math-label">Cost per Pack:</span>
+                        <span class="math-value">× $2,000</span>
+                    </div>
+                    <div class="math-row">
+                        <span class="math-label" style="color: var(--secondary-color);"><strong>Total AI Cost:</strong></span>
+                        <span class="math-value" style="color: var(--secondary-color);"><strong><span id="modal-ai-total-cost">$0</span></strong></span>
+                    </div>
+                </div>
             </div>
         </div>
     </dialog>

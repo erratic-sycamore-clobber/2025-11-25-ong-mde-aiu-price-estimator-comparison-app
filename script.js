@@ -3,7 +3,7 @@ const DEFAULTS = {
     documents: 10000,
     pagesPerDoc: 5,
     fieldsPerDoc: 10,
-    humanTimePerDoc: 750,
+    humanTimePerDoc: 690,
     minWageRate: 15.00,
     consultantRate: 200.00,
     enhancedPercentage: 50,
@@ -54,9 +54,7 @@ const outputs = {
     summaryFTE: document.getElementById('summaryFTE'),
     fteSubtext: document.getElementById('fteSubtext'),
     summaryBreakEven: document.getElementById('summaryBreakEven'),
-    summaryAiCost: document.getElementById('summaryAiCost'),
-    tableBody: document.querySelector('#comparisonTable tbody'),
-    insightsList: document.getElementById('insightsList')
+    summaryAiCost: document.getElementById('summaryAiCost')
 };
 
 // URL State Management
@@ -254,6 +252,11 @@ function getEffectiveAiuPerPage() {
     return (1 * standardRatio) + (3 * enhancedRatio);
 }
 
+function updateText(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+}
+
 function calculateAndRender() {
     const effectiveAvgPages = getEffectiveAvgPages(state.pagesPerDoc);
     const totalPages = state.documents * effectiveAvgPages;
@@ -354,64 +357,49 @@ function calculateAndRender() {
     outputs.summaryAiCost.textContent = formatCurrency(aiTotalCost);
 
     // --- Update Table ---
-    outputs.tableBody.innerHTML = `
-        <tr>
-            <td class="fw-bold">AI Processing</td>
-            <td class="text-right">$${formatNumber(COST_PER_PACK)} / 100k AIU</td>
-            <td class="text-right">Instant</td>
-            <td class="text-right fw-bold text-success">${formatCurrency(aiTotalCost)}</td>
-            <td class="text-right">$${aiCostPerDoc.toFixed(4)}</td>
-            <td class="text-right">-</td>
-            <td class="text-right fw-bold text-success">1.00x</td>
-        </tr>
-        <tr>
-            <td class="fw-bold">Human (Standard)</td>
-            <td class="text-right">$${state.minWageRate.toFixed(2)} / hr</td>
-            <td class="text-right">${formatNumber(Math.round(totalHumanHours))} hrs</td>
-            <td class="text-right fw-bold text-warning">${formatCurrency(minWageTotalCost)}</td>
-            <td class="text-right">$${minWageCostPerDoc.toFixed(4)}</td>
-            <td class="text-right fw-bold ${netSavingsStandard >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(netSavingsStandard)}</td>
-            <td class="text-right fw-bold text-warning">${(minWageTotalCost / aiTotalCost).toFixed(2)}x</td>
-        </tr>
-        <tr>
-            <td class="fw-bold">Human (Expert)</td>
-            <td class="text-right">$${state.consultantRate.toFixed(2)} / hr</td>
-            <td class="text-right">${formatNumber(Math.round(totalHumanHours))} hrs</td>
-            <td class="text-right fw-bold text-danger">${formatCurrency(consultantTotalCost)}</td>
-            <td class="text-right">$${consultantCostPerDoc.toFixed(4)}</td>
-            <td class="text-right fw-bold ${netSavingsExpert >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(netSavingsExpert)}</td>
-            <td class="text-right fw-bold text-danger">${(consultantTotalCost / aiTotalCost).toFixed(2)}x</td>
-        </tr>
-    `;
+    // AI Row
+    updateText('table-ai-pack-cost', formatNumber(COST_PER_PACK));
+    updateText('table-ai-total-cost', formatCurrency(aiTotalCost));
+    updateText('table-ai-cost-per-doc', '$' + aiCostPerDoc.toFixed(4));
+
+    // Human Standard Row
+    updateText('table-human-std-rate', state.minWageRate.toFixed(2));
+    updateText('table-human-std-hours', formatNumber(Math.round(totalHumanHours)));
+    updateText('table-human-std-total', formatCurrency(minWageTotalCost));
+    updateText('table-human-std-cost-per-doc', '$' + minWageCostPerDoc.toFixed(4));
+    
+    const stdSavingsEl = document.getElementById('table-human-std-savings');
+    if (stdSavingsEl) {
+        stdSavingsEl.textContent = formatCurrency(netSavingsStandard);
+        // Reset classes and add base classes
+        stdSavingsEl.className = 'text-right fw-bold';
+        stdSavingsEl.classList.add(netSavingsStandard >= 0 ? 'text-success' : 'text-danger');
+    }
+
+    updateText('table-human-std-ratio', (minWageTotalCost / aiTotalCost).toFixed(2) + 'x');
+
+    // Human Expert Row
+    updateText('table-human-exp-rate', state.consultantRate.toFixed(2));
+    updateText('table-human-exp-hours', formatNumber(Math.round(totalHumanHours)));
+    updateText('table-human-exp-total', formatCurrency(consultantTotalCost));
+    updateText('table-human-exp-cost-per-doc', '$' + consultantCostPerDoc.toFixed(4));
+
+    const expSavingsEl = document.getElementById('table-human-exp-savings');
+    if (expSavingsEl) {
+        expSavingsEl.textContent = formatCurrency(netSavingsExpert);
+        // Reset classes and add base classes
+        expSavingsEl.className = 'text-right fw-bold';
+        expSavingsEl.classList.add(netSavingsExpert >= 0 ? 'text-success' : 'text-danger');
+    }
+
+    updateText('table-human-exp-ratio', (consultantTotalCost / aiTotalCost).toFixed(2) + 'x');
 
     // --- Update Insights ---
-    // Friendly, professional narrative
-    outputs.insightsList.innerHTML = `
-        <li>
-            <span class="insight-icon text-success">✓</span>
-            <span>
-                <strong>Headline:</strong> Projected <strong>${formatNumber(Math.round(roiStandard))}% ROI</strong> and <strong>${formatCurrency(netSavingsStandard)}</strong> in savings compared to standard manual processing.
-            </span>
-        </li>
-        <li>
-            <span class="insight-icon text-warning">⚠</span>
-            <span>
-                <strong>Feasibility:</strong> To match this output manually in one year, you'd need approximately <strong>${formatNumber(Math.ceil(fteCount))} full-time employees</strong> working solely on this task.
-            </span>
-        </li>
-        <li>
-            <span class="insight-icon text-primary">ℹ</span>
-            <span>
-                <strong>Pricing Context:</strong> AI costs are estimated using standard $2k data packs (100k units each). Buying in bulk or subscriptions could save even more.
-            </span>
-        </li>
-        <li>
-            <span class="insight-icon text-primary">ℹ</span>
-            <span>
-                Based on your input of <strong>${(state.humanTimePerDoc / 60).toFixed(1)} min/file</strong>, AI processing is <strong>${(minWageCostPerDoc / aiCostPerDoc).toFixed(1)}x cheaper</strong> per document.
-            </span>
-        </li>
-    `;
+    updateText('insight-roi', formatNumber(Math.round(roiStandard)) + '%');
+    updateText('insight-savings', formatCurrency(netSavingsStandard));
+    updateText('insight-fte', formatNumber(Math.ceil(fteCount)));
+    updateText('insight-time-per-doc', (state.humanTimePerDoc / 60).toFixed(1));
+    updateText('insight-cheaper-ratio', aiCostPerDoc > 0 ? (minWageCostPerDoc / aiCostPerDoc).toFixed(1) : '0');
 
     // --- Update Charts ---
     updateCharts(aiTotalCost, minWageTotalCost, consultantTotalCost);
@@ -578,13 +566,11 @@ function initCharts() {
 function showExplanation(metric) {
     const modal = document.getElementById('explanationModal');
     const modalTitle = document.getElementById('modalTitle');
-    const modalBody = document.getElementById('modalBody');
     const closeBtn = document.querySelector('.close-modal');
 
     // Close handler
     const closeModal = () => {
         modal.close();
-        // Reset body scroll if needed, though dialog element handles it well
     };
     
     closeBtn.onclick = closeModal;
@@ -594,7 +580,10 @@ function showExplanation(metric) {
         if (e.target === modal) closeModal();
     };
 
-    // Calculate current values for display
+    // Hide all scenario contents first
+    document.querySelectorAll('.modal-scenario').forEach(el => el.hidden = true);
+
+    // Calculate current values
     const effectiveAvgPages = getEffectiveAvgPages(state.pagesPerDoc);
     const totalPages = state.documents * effectiveAvgPages;
     const totalAIU = totalPages * getEffectiveAiuPerPage();
@@ -605,189 +594,63 @@ function showExplanation(metric) {
     const minWageTotalCost = totalHumanHours * state.minWageRate;
     const netSavings = minWageTotalCost - aiTotalCost;
     const fteCount = totalHumanHours / EFFECTIVE_ANNUAL_HOURS;
-
-    let content = '';
+    const efficiencyRatio = aiTotalCost > 0 ? (minWageTotalCost / aiTotalCost) : 0;
 
     if (metric === 'roi') {
         modalTitle.textContent = 'Projected ROI Breakdown';
         const roiStandard = aiTotalCost > 0 ? ((netSavings / aiTotalCost) * 100) : 0;
-        content = `
-            <p class="explanation-text">
-                <strong>Return on Investment (ROI)</strong> is calculated based on <strong>Labor Cost Avoidance</strong>. 
-                <br><br>
-                It strictly measures the hard dollar savings of using AI versus paying for manual labor at your specified rates. It does not include "soft" benefits like faster turnaround or reduced error rates, making this a conservative estimate.
-            </p>
-            <div class="math-row">
-                <span class="math-label">Total Human Cost (Liability):</span>
-                <span class="math-value">${formatCurrency(minWageTotalCost)}</span>
-            </div>
-            <div class="math-row">
-                <span class="math-label">Total AI Cost (Investment):</span>
-                <span class="math-value">- ${formatCurrency(aiTotalCost)}</span>
-            </div>
-            <div class="math-row">
-                <span class="math-label"><strong>Net Savings:</strong></span>
-                <span class="math-value"><strong>${formatCurrency(netSavings)}</strong></span>
-            </div>
-            <br>
-            <div class="math-row">
-                <span class="math-label">Investment Base:</span>
-                <span class="math-value">÷ ${formatCurrency(aiTotalCost)}</span>
-            </div>
-            <div class="math-row">
-                <span class="math-label" style="color: var(--secondary-color);"><strong>Projected ROI:</strong></span>
-                <span class="math-value" style="color: var(--secondary-color);"><strong>${formatNumber(Math.round(roiStandard))}%</strong></span>
-            </div>
-        `;
+        
+        document.getElementById('modal-content-roi').hidden = false;
+        updateText('modal-roi-human-cost', formatCurrency(minWageTotalCost));
+        updateText('modal-roi-ai-cost', formatCurrency(aiTotalCost));
+        updateText('modal-roi-net-savings', formatCurrency(netSavings));
+        updateText('modal-roi-ai-cost-base', formatCurrency(aiTotalCost));
+        updateText('modal-roi-value', formatNumber(Math.round(roiStandard)) + '%');
+
     } else if (metric === 'savings') {
         modalTitle.textContent = 'Net Estimated Savings Breakdown';
-        const efficiencyRatio = aiTotalCost > 0 ? (minWageTotalCost / aiTotalCost) : 0;
-        content = `
-            <p class="explanation-text">
-                <strong>Net Estimated Savings</strong> represents the direct financial advantage of using AI over standard manual entry. 
-                <br><br>
-                The <strong>Efficiency Multiplier</strong> (e.g., "${efficiencyRatio.toFixed(1)}x") shows how many times more expensive it is to stick with the manual process.
-            </p>
-            <div class="math-row">
-                <span class="math-label">Total Human Hours:</span>
-                <span class="math-value">${formatNumber(Math.round(totalHumanHours))} hrs</span>
-            </div>
-            <div class="math-row">
-                <span class="math-label">Standard Hourly Rate:</span>
-                <span class="math-value">$${state.minWageRate.toFixed(2)} / hr</span>
-            </div>
-            <div class="math-row">
-                <span class="math-label"><strong>Total Human Cost:</strong></span>
-                <span class="math-value"><strong>${formatCurrency(minWageTotalCost)}</strong></span>
-            </div>
-            <br>
-            <div class="math-row">
-                <span class="math-label">Total AI Units:</span>
-                <span class="math-value">${formatNumber(Math.ceil(totalAIU))} AIU</span>
-            </div>
-             <div class="math-row">
-                <span class="math-label">Packs Needed (100k/pack):</span>
-                <span class="math-value">${packsNeeded} packs</span>
-            </div>
-            <div class="math-row">
-                <span class="math-label">Cost per Pack:</span>
-                <span class="math-value">$${formatNumber(COST_PER_PACK)}</span>
-            </div>
-            <div class="math-row">
-                <span class="math-label"><strong>Total AI Cost:</strong></span>
-                <span class="math-value"><strong>${formatCurrency(aiTotalCost)}</strong></span>
-            </div>
-            <div class="math-row">
-                <span class="math-label" style="color: var(--secondary-color);"><strong>Net Savings:</strong></span>
-                <span class="math-value" style="color: var(--secondary-color);"><strong>${formatCurrency(netSavings)}</strong></span>
-            </div>
-        `;
+        
+        document.getElementById('modal-content-savings').hidden = false;
+        updateText('modal-savings-ratio', efficiencyRatio.toFixed(1));
+        updateText('modal-savings-hours', formatNumber(Math.round(totalHumanHours)));
+        updateText('modal-savings-rate', state.minWageRate.toFixed(2));
+        updateText('modal-savings-human-total', formatCurrency(minWageTotalCost));
+        updateText('modal-savings-aiu', formatNumber(Math.ceil(totalAIU)));
+        updateText('modal-savings-packs', packsNeeded);
+        updateText('modal-savings-ai-total', formatCurrency(aiTotalCost));
+        updateText('modal-savings-net', formatCurrency(netSavings));
+
     } else if (metric === 'breakeven') {
+        modalTitle.textContent = 'Break-Even Volume Analysis';
         const minWageCostPerDoc = minWageTotalCost / state.documents;
         const breakEvenDocs = minWageCostPerDoc > 0 ? Math.ceil(COST_PER_PACK / minWageCostPerDoc) : 0;
-        modalTitle.textContent = 'Break-Even Volume Analysis';
-        content = `
-            <p class="explanation-text">
-                <strong>Break-Even Volume</strong> answers the question: "When does this investment pay for itself?"
-                <br><br>
-                It calculates how many documents you need to process manually before that cost exceeds the price of a single AI Pack ($${formatNumber(COST_PER_PACK)}). Any volume above this number is pure savings.
-            </p>
-             <div class="math-row">
-                <span class="math-label">Cost of 1 AI Pack:</span>
-                <span class="math-value">$${formatNumber(COST_PER_PACK)}</span>
-            </div>
-            <div class="math-row">
-                <span class="math-label">Manual Cost per File:</span>
-                <span class="math-value">÷ $${minWageCostPerDoc.toFixed(4)}</span>
-            </div>
-            <div class="math-row">
-                <span class="math-label" style="color: var(--secondary-color);"><strong>Break-Even Point:</strong></span>
-                <span class="math-value" style="color: var(--secondary-color);"><strong>${formatNumber(breakEvenDocs)} Files</strong></span>
-            </div>
-            <p class="note" style="margin-top: 15px;">
-                Note: This assumes you purchase 1 pack to start.
-            </p>
-        `;
+        
+        document.getElementById('modal-content-breakeven').hidden = false;
+        updateText('modal-breakeven-manual-cost', minWageCostPerDoc.toFixed(4));
+        updateText('modal-breakeven-docs', formatNumber(breakEvenDocs));
+
     } else if (metric === 'fte') {
         modalTitle.textContent = 'Est. FTEs Required Breakdown';
         const workingYears = totalHumanHours / EFFECTIVE_ANNUAL_HOURS;
-        content = `
-            <p class="explanation-text">
-                <strong>Full-Time Equivalent (FTE)</strong> estimates the headcount needed.
-                <br>
-                <strong>Time Velocity</strong> (Working Years) highlights the opportunity cost of time.
-                <br><br>
-                We use a realistic annual capacity of <strong>${formatNumber(EFFECTIVE_ANNUAL_HOURS)} hours</strong> per employee (taking into account PTO and 75% productivity).
-            </p>
-            <div class="math-row">
-                <span class="math-label">Total Documents:</span>
-                <span class="math-value">${formatNumber(state.documents)}</span>
-            </div>
-             <div class="math-row">
-                <span class="math-label">Time per Document:</span>
-                <span class="math-value">${(state.humanTimePerDoc / 60).toFixed(1)} min</span>
-            </div>
-            <div class="math-row">
-                <span class="math-label"><strong>Total Workload Hours:</strong></span>
-                <span class="math-value"><strong>${formatNumber(Math.round(totalHumanHours))} hrs</strong></span>
-            </div>
-            <br>
-            <div class="math-row">
-                <span class="math-label">Effective Annual Hours/FTE:</span>
-                <span class="math-value">÷ ${formatNumber(EFFECTIVE_ANNUAL_HOURS)} hrs</span>
-            </div>
-            <div class="math-row">
-                <span class="math-label" style="color: var(--danger-color);"><strong>FTEs Required:</strong></span>
-                <span class="math-value" style="color: var(--danger-color);"><strong>${formatNumber(Math.ceil(fteCount))}</strong></span>
-            </div>
-            <div class="math-row">
-                <span class="math-label"><strong>Equivalent Time:</strong></span>
-                <span class="math-value"><strong>${workingYears.toFixed(1)} Years</strong></span>
-            </div>
-        `;
+        
+        document.getElementById('modal-content-fte').hidden = false;
+        updateText('modal-fte-docs', formatNumber(state.documents));
+        updateText('modal-fte-time-per-doc', (state.humanTimePerDoc / 60).toFixed(1));
+        updateText('modal-fte-total-hours', formatNumber(Math.round(totalHumanHours)));
+        updateText('modal-fte-count', formatNumber(Math.ceil(fteCount)));
+        updateText('modal-fte-years', workingYears.toFixed(1));
+
     } else if (metric === 'ai') {
         modalTitle.textContent = 'Est. AI Cost Breakdown';
-        content = `
-            <p class="explanation-text">
-                AI costs are calculated based on a <strong>"Lump Sum" purchase model</strong>. 
-                Credits are purchased in minimum blocks (packs) of 100,000 AI Units (AIU).
-                <br><br>
-                • Standard Page = 1 AIU
-                <br>• Enhanced Page = 3 AIU (for complex layouts/handwriting)
-            </p>
-            <div class="math-row">
-                <span class="math-label">Total Pages:</span>
-                <span class="math-value">${formatNumber(Math.ceil(totalPages))}</span>
-            </div>
-            <div class="math-row">
-                <span class="math-label">Effective AIU per Page:</span>
-                <span class="math-value">× ${getEffectiveAiuPerPage().toFixed(2)}</span>
-            </div>
-            <div class="math-row">
-                <span class="math-label"><strong>Total AI Units Needed:</strong></span>
-                <span class="math-value"><strong>${formatNumber(Math.ceil(totalAIU))}</strong></span>
-            </div>
-            <br>
-            <div class="math-row">
-                <span class="math-label">AI Units per Pack:</span>
-                <span class="math-value">÷ ${formatNumber(AIU_PER_PACK)}</span>
-            </div>
-             <div class="math-row">
-                <span class="math-label">Packs Required (Rounded Up):</span>
-                <span class="math-value">${packsNeeded}</span>
-            </div>
-             <div class="math-row">
-                <span class="math-label">Cost per Pack:</span>
-                <span class="math-value">× $${formatNumber(COST_PER_PACK)}</span>
-            </div>
-            <div class="math-row">
-                <span class="math-label" style="color: var(--secondary-color);"><strong>Total AI Cost:</strong></span>
-                <span class="math-value" style="color: var(--secondary-color);"><strong>${formatCurrency(aiTotalCost)}</strong></span>
-            </div>
-        `;
+        
+        document.getElementById('modal-content-ai').hidden = false;
+        updateText('modal-ai-pages', formatNumber(Math.ceil(totalPages)));
+        updateText('modal-ai-aiu-per-page', getEffectiveAiuPerPage().toFixed(2));
+        updateText('modal-ai-total-aiu', formatNumber(Math.ceil(totalAIU)));
+        updateText('modal-ai-packs', packsNeeded);
+        updateText('modal-ai-total-cost', formatCurrency(aiTotalCost));
     }
 
-    modalBody.innerHTML = content;
     modal.showModal();
 }
 
