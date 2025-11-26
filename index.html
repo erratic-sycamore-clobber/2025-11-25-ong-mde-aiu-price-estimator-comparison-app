@@ -87,12 +87,33 @@
                 <section class="summary-section">
                     <div class="summary-card highlight" onclick="showExplanation('roi')" style="cursor: pointer;">
                         <h3>Projected ROI ⓘ</h3>
-                        <p id="summaryROI">0%</p>
+                        <div class="stat-split-container">
+                            <div class="stat-col">
+                                <span class="stat-label">Standard</span>
+                                <p id="summaryROIStd" class="stat-value">0%</p>
+                            </div>
+                            <div class="stat-separator"></div>
+                            <div class="stat-col">
+                                <span class="stat-label">Expert</span>
+                                <p id="summaryROIExp" class="stat-value">0%</p>
+                            </div>
+                        </div>
                     </div>
                     <div class="summary-card highlight-secondary" onclick="showExplanation('savings')" style="cursor: pointer;">
                         <h3>Net Est. Savings ⓘ</h3>
-                        <p id="summarySavings">$0</p>
-                        <div id="savingsBadge" class="multiplier-badge">1x Cheaper</div>
+                        <div class="stat-split-container">
+                            <div class="stat-col">
+                                <span class="stat-label">Standard</span>
+                                <p id="summarySavingsStd" class="stat-value">$0</p>
+                                <div id="savingsBadgeStd" class="multiplier-badge-small">1x</div>
+                            </div>
+                            <div class="stat-separator"></div>
+                            <div class="stat-col">
+                                <span class="stat-label">Expert</span>
+                                <p id="summarySavingsExp" class="stat-value">$0</p>
+                                <div id="savingsBadgeExp" class="multiplier-badge-small">1x</div>
+                            </div>
+                        </div>
                     </div>
                     <div class="summary-card" onclick="showExplanation('fte')" style="cursor: pointer;">
                         <h3>Est. FTEs Required ⓘ</h3>
@@ -101,7 +122,17 @@
                     </div>
                     <div class="summary-card" onclick="showExplanation('breakeven')" style="cursor: pointer;">
                         <h3>Break-Even Volume ⓘ</h3>
-                        <p id="summaryBreakEven">0 Files</p>
+                        <div class="stat-split-container">
+                            <div class="stat-col">
+                                <span class="stat-label">Standard</span>
+                                <p id="summaryBreakEvenStd" class="stat-value">0</p>
+                            </div>
+                            <div class="stat-separator"></div>
+                            <div class="stat-col">
+                                <span class="stat-label">Expert</span>
+                                <p id="summaryBreakEvenExp" class="stat-value">0</p>
+                            </div>
+                        </div>
                     </div>
                     <div class="summary-card" onclick="showExplanation('ai')" style="cursor: pointer;">
                         <h3>Est. AI Cost ⓘ</h3>
@@ -246,26 +277,59 @@
                         <br><br>
                         It strictly measures the hard dollar savings of using AI versus paying for manual labor at your specified rates. It does not include "soft" benefits like faster turnaround or reduced error rates, making this a conservative estimate.
                     </p>
-                    <div class="math-row">
-                        <span class="math-label">Total Human Cost (Liability):</span>
-                        <span class="math-value" id="modal-roi-human-cost">$0</span>
-                    </div>
-                    <div class="math-row">
-                        <span class="math-label">Total AI Cost (Investment):</span>
-                        <span class="math-value">- <span id="modal-roi-ai-cost">$0</span></span>
-                    </div>
-                    <div class="math-row">
-                        <span class="math-label"><strong>Net Savings:</strong></span>
-                        <span class="math-value"><strong><span id="modal-roi-net-savings">$0</span></strong></span>
-                    </div>
-                    <br>
-                    <div class="math-row">
-                        <span class="math-label">Investment Base:</span>
-                        <span class="math-value">÷ <span id="modal-roi-ai-cost-base">$0</span></span>
-                    </div>
-                    <div class="math-row">
-                        <span class="math-label" style="color: var(--secondary-color);"><strong>Projected ROI:</strong></span>
-                        <span class="math-value" style="color: var(--secondary-color);"><strong><span id="modal-roi-value">0%</span></strong></span>
+                    
+                    <div class="modal-split-wrapper">
+                        <!-- Standard Scenario -->
+                        <div class="modal-scenario-block">
+                            <h4>Standard (Min. Wage)</h4>
+                            <div class="math-row">
+                                <span class="math-label">Total Human Cost:</span>
+                                <span class="math-value" id="modal-roi-human-cost">$0</span>
+                            </div>
+                            <div class="math-row">
+                                <span class="math-label">Total AI Cost:</span>
+                                <span class="math-value">- <span id="modal-roi-ai-cost">$0</span></span>
+                            </div>
+                            <div class="math-row">
+                                <span class="math-label"><strong>Net Savings:</strong></span>
+                                <span class="math-value"><strong><span id="modal-roi-net-savings">$0</span></strong></span>
+                            </div>
+                            <br>
+                            <div class="math-row">
+                                <span class="math-label">Investment Base:</span>
+                                <span class="math-value">÷ <span id="modal-roi-ai-cost-base">$0</span></span>
+                            </div>
+                            <div class="math-row">
+                                <span class="math-label" style="color: var(--secondary-color);"><strong>Projected ROI:</strong></span>
+                                <span class="math-value" style="color: var(--secondary-color);"><strong><span id="modal-roi-value">0%</span></strong></span>
+                            </div>
+                        </div>
+
+                        <!-- Expert Scenario -->
+                        <div class="modal-scenario-block">
+                            <h4>Expert (Consultant)</h4>
+                            <div class="math-row">
+                                <span class="math-label">Total Human Cost:</span>
+                                <span class="math-value" id="modal-roi-human-cost-exp">$0</span>
+                            </div>
+                            <div class="math-row">
+                                <span class="math-label">Total AI Cost:</span>
+                                <span class="math-value">- <span id="modal-roi-ai-cost-exp">$0</span></span>
+                            </div>
+                            <div class="math-row">
+                                <span class="math-label"><strong>Net Savings:</strong></span>
+                                <span class="math-value"><strong><span id="modal-roi-net-savings-exp">$0</span></strong></span>
+                            </div>
+                            <br>
+                            <div class="math-row">
+                                <span class="math-label">Investment Base:</span>
+                                <span class="math-value">÷ <span id="modal-roi-ai-cost-base-exp">$0</span></span>
+                            </div>
+                            <div class="math-row">
+                                <span class="math-label" style="color: var(--secondary-color);"><strong>Projected ROI:</strong></span>
+                                <span class="math-value" style="color: var(--secondary-color);"><strong><span id="modal-roi-value-exp">0%</span></strong></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -276,38 +340,82 @@
                         <br><br>
                         The <strong>Efficiency Multiplier</strong> (e.g., "<span id="modal-savings-ratio">1.0</span>x") shows how many times more expensive it is to stick with the manual process.
                     </p>
-                    <div class="math-row">
-                        <span class="math-label">Total Human Hours:</span>
-                        <span class="math-value"><span id="modal-savings-hours">0</span> hrs</span>
+                    
+                    <div class="modal-split-wrapper">
+                         <!-- Standard Scenario -->
+                        <div class="modal-scenario-block">
+                            <h4>Standard (Min. Wage)</h4>
+                            <div class="math-row">
+                                <span class="math-label">Total Human Hours:</span>
+                                <span class="math-value"><span id="modal-savings-hours">0</span> hrs</span>
+                            </div>
+                            <div class="math-row">
+                                <span class="math-label">Hourly Rate:</span>
+                                <span class="math-value">$<span id="modal-savings-rate">15.00</span> / hr</span>
+                            </div>
+                            <div class="math-row">
+                                <span class="math-label"><strong>Total Human Cost:</strong></span>
+                                <span class="math-value"><strong><span id="modal-savings-human-total">$0</span></strong></span>
+                            </div>
+                            <br>
+                            <div class="math-row">
+                                <span class="math-label"><strong>Total AI Cost:</strong></span>
+                                <span class="math-value"><strong><span id="modal-savings-ai-total">$0</span></strong></span>
+                            </div>
+                            <div class="math-row">
+                                <span class="math-label" style="color: var(--secondary-color);"><strong>Net Savings:</strong></span>
+                                <span class="math-value" style="color: var(--secondary-color);"><strong><span id="modal-savings-net">$0</span></strong></span>
+                            </div>
+                             <div class="math-row">
+                                <span class="math-label">Multiplier:</span>
+                                <span class="math-value"><span id="modal-savings-ratio-display">1.0</span>x</span>
+                            </div>
+                        </div>
+
+                         <!-- Expert Scenario -->
+                        <div class="modal-scenario-block">
+                            <h4>Expert (Consultant)</h4>
+                            <div class="math-row">
+                                <span class="math-label">Total Human Hours:</span>
+                                <span class="math-value"><span id="modal-savings-hours-exp">0</span> hrs</span>
+                            </div>
+                            <div class="math-row">
+                                <span class="math-label">Hourly Rate:</span>
+                                <span class="math-value">$<span id="modal-savings-rate-exp">200.00</span> / hr</span>
+                            </div>
+                            <div class="math-row">
+                                <span class="math-label"><strong>Total Human Cost:</strong></span>
+                                <span class="math-value"><strong><span id="modal-savings-human-total-exp">$0</span></strong></span>
+                            </div>
+                            <br>
+                            <div class="math-row">
+                                <span class="math-label"><strong>Total AI Cost:</strong></span>
+                                <span class="math-value"><strong><span id="modal-savings-ai-total-exp">$0</span></strong></span>
+                            </div>
+                            <div class="math-row">
+                                <span class="math-label" style="color: var(--secondary-color);"><strong>Net Savings:</strong></span>
+                                <span class="math-value" style="color: var(--secondary-color);"><strong><span id="modal-savings-net-exp">$0</span></strong></span>
+                            </div>
+                             <div class="math-row">
+                                <span class="math-label">Multiplier:</span>
+                                <span class="math-value"><span id="modal-savings-ratio-display-exp">1.0</span>x</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="math-row">
-                        <span class="math-label">Standard Hourly Rate:</span>
-                        <span class="math-value">$<span id="modal-savings-rate">15.00</span> / hr</span>
-                    </div>
-                    <div class="math-row">
-                        <span class="math-label"><strong>Total Human Cost:</strong></span>
-                        <span class="math-value"><strong><span id="modal-savings-human-total">$0</span></strong></span>
-                    </div>
-                    <br>
-                    <div class="math-row">
-                        <span class="math-label">Total AI Units:</span>
-                        <span class="math-value"><span id="modal-savings-aiu">0</span> AIU</span>
-                    </div>
-                     <div class="math-row">
-                        <span class="math-label">Packs Needed (100k/pack):</span>
-                        <span class="math-value"><span id="modal-savings-packs">0</span> packs</span>
-                    </div>
-                    <div class="math-row">
-                        <span class="math-label">Cost per Pack:</span>
-                        <span class="math-value">$2,000</span>
-                    </div>
-                    <div class="math-row">
-                        <span class="math-label"><strong>Total AI Cost:</strong></span>
-                        <span class="math-value"><strong><span id="modal-savings-ai-total">$0</span></strong></span>
-                    </div>
-                    <div class="math-row">
-                        <span class="math-label" style="color: var(--secondary-color);"><strong>Net Savings:</strong></span>
-                        <span class="math-value" style="color: var(--secondary-color);"><strong><span id="modal-savings-net">$0</span></strong></span>
+                    
+                    <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                         <div class="math-row">
+                            <span class="math-label">Total AI Units:</span>
+                            <span class="math-value"><span id="modal-savings-aiu">0</span> AIU</span>
+                        </div>
+                         <div class="math-row">
+                            <span class="math-label">Packs Needed (100k/pack):</span>
+                            <span class="math-value"><span id="modal-savings-packs">0</span> packs</span>
+                        </div>
+                        <div class="math-row">
+                            <span class="math-label">Cost per Pack:</span>
+                            <span class="math-value">$2,000</span>
+                        </div>
                     </div>
                 </div>
 
@@ -318,18 +426,43 @@
                         <br><br>
                         It calculates how many documents you need to process manually before that cost exceeds the price of a single AI Pack ($2,000). Any volume above this number is pure savings.
                     </p>
-                     <div class="math-row">
-                        <span class="math-label">Cost of 1 AI Pack:</span>
-                        <span class="math-value">$2,000</span>
+                    
+                    <div class="modal-split-wrapper">
+                        <!-- Standard Scenario -->
+                        <div class="modal-scenario-block">
+                            <h4>Standard (Min. Wage)</h4>
+                             <div class="math-row">
+                                <span class="math-label">Cost of 1 AI Pack:</span>
+                                <span class="math-value">$2,000</span>
+                            </div>
+                            <div class="math-row">
+                                <span class="math-label">Manual Cost per File:</span>
+                                <span class="math-value">÷ $<span id="modal-breakeven-manual-cost">0.0000</span></span>
+                            </div>
+                            <div class="math-row">
+                                <span class="math-label" style="color: var(--secondary-color);"><strong>Break-Even Point:</strong></span>
+                                <span class="math-value" style="color: var(--secondary-color);"><strong><span id="modal-breakeven-docs">0</span> Files</strong></span>
+                            </div>
+                        </div>
+
+                        <!-- Expert Scenario -->
+                        <div class="modal-scenario-block">
+                            <h4>Expert (Consultant)</h4>
+                             <div class="math-row">
+                                <span class="math-label">Cost of 1 AI Pack:</span>
+                                <span class="math-value">$2,000</span>
+                            </div>
+                            <div class="math-row">
+                                <span class="math-label">Manual Cost per File:</span>
+                                <span class="math-value">÷ $<span id="modal-breakeven-manual-cost-exp">0.0000</span></span>
+                            </div>
+                            <div class="math-row">
+                                <span class="math-label" style="color: var(--secondary-color);"><strong>Break-Even Point:</strong></span>
+                                <span class="math-value" style="color: var(--secondary-color);"><strong><span id="modal-breakeven-docs-exp">0</span> Files</strong></span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="math-row">
-                        <span class="math-label">Manual Cost per File:</span>
-                        <span class="math-value">÷ $<span id="modal-breakeven-manual-cost">0.0000</span></span>
-                    </div>
-                    <div class="math-row">
-                        <span class="math-label" style="color: var(--secondary-color);"><strong>Break-Even Point:</strong></span>
-                        <span class="math-value" style="color: var(--secondary-color);"><strong><span id="modal-breakeven-docs">0</span> Files</strong></span>
-                    </div>
+                    
                     <p class="note" style="margin-top: 15px;">
                         Note: This assumes you purchase 1 pack to start.
                     </p>

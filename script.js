@@ -49,12 +49,21 @@ const inputs = {
 };
 
 const outputs = {
-    summaryROI: document.getElementById('summaryROI'),
-    summarySavings: document.getElementById('summarySavings'),
-    savingsBadge: document.getElementById('savingsBadge'),
+    summaryROI: document.getElementById('summaryROI'), // Keeping parent for potential future use or removal check? No, wait. I removed summaryROI ID in HTML.
+    summaryROIStd: document.getElementById('summaryROIStd'),
+    summaryROIExp: document.getElementById('summaryROIExp'),
+    
+    summarySavingsStd: document.getElementById('summarySavingsStd'),
+    summarySavingsExp: document.getElementById('summarySavingsExp'),
+    savingsBadgeStd: document.getElementById('savingsBadgeStd'),
+    savingsBadgeExp: document.getElementById('savingsBadgeExp'),
+    
     summaryFTE: document.getElementById('summaryFTE'),
     fteSubtext: document.getElementById('fteSubtext'),
-    summaryBreakEven: document.getElementById('summaryBreakEven'),
+    
+    summaryBreakEvenStd: document.getElementById('summaryBreakEvenStd'),
+    summaryBreakEvenExp: document.getElementById('summaryBreakEvenExp'),
+    
     summaryAiCost: document.getElementById('summaryAiCost')
 };
 
@@ -283,13 +292,16 @@ function calculateMetrics(currentState) {
     // ROI = (Net Savings / Investment) * 100
     // Prevent division by zero if AI cost is 0 (unlikely but safe)
     const roiStandard = aiTotalCost > 0 ? ((netSavingsStandard / aiTotalCost) * 100) : 0;
+    const roiExpert = aiTotalCost > 0 ? ((netSavingsExpert / aiTotalCost) * 100) : 0;
     
     // Efficiency Multiplier
     const efficiencyRatio = aiTotalCost > 0 ? (minWageTotalCost / aiTotalCost) : 0;
+    const efficiencyRatioExpert = aiTotalCost > 0 ? (consultantTotalCost / aiTotalCost) : 0;
 
     // Break-Even Volume
     // Formula: BreakEvenDocs = FirstPackCost / HumanCostPerDoc
     const breakEvenDocs = minWageCostPerDoc > 0 ? Math.ceil(COST_PER_PACK / minWageCostPerDoc) : 0;
+    const breakEvenDocsExpert = consultantCostPerDoc > 0 ? Math.ceil(COST_PER_PACK / consultantCostPerDoc) : 0;
 
     // FTE Calculation
     const fteCount = totalHumanHours / EFFECTIVE_ANNUAL_HOURS;
@@ -312,8 +324,11 @@ function calculateMetrics(currentState) {
         netSavingsStandard,
         netSavingsExpert,
         roiStandard,
+        roiExpert,
         efficiencyRatio,
+        efficiencyRatioExpert,
         breakEvenDocs,
+        breakEvenDocsExpert,
         fteCount,
         workingYears
     };
@@ -322,32 +337,63 @@ function calculateMetrics(currentState) {
 function renderUI(metrics) {
     // --- Update Summary ---
     
-    // 1. ROI
-    outputs.summaryROI.textContent = `${formatNumber(Math.round(metrics.roiStandard))}%`;
-    // Color code ROI
+    // 1. ROI (Split)
+    outputs.summaryROIStd.textContent = `${formatNumber(Math.round(metrics.roiStandard))}%`;
+    outputs.summaryROIExp.textContent = `${formatNumber(Math.round(metrics.roiExpert))}%`;
+    
+    // Color code ROI Standard
     if (metrics.roiStandard > 0) {
-        outputs.summaryROI.className = '';
-        outputs.summaryROI.classList.add('stat-positive');
+        outputs.summaryROIStd.classList.remove('stat-critical');
+        outputs.summaryROIStd.classList.add('stat-positive');
     } else {
-        outputs.summaryROI.className = '';
-        outputs.summaryROI.classList.add('stat-critical');
+        outputs.summaryROIStd.classList.remove('stat-positive');
+        outputs.summaryROIStd.classList.add('stat-critical');
+    }
+    // Color code ROI Expert
+    if (metrics.roiExpert > 0) {
+        outputs.summaryROIExp.classList.remove('stat-critical');
+        outputs.summaryROIExp.classList.add('stat-positive');
+    } else {
+        outputs.summaryROIExp.classList.remove('stat-positive');
+        outputs.summaryROIExp.classList.add('stat-critical');
     }
 
-    // 2. Net Estimated Savings (Standard)
-    outputs.summarySavings.textContent = formatCurrency(metrics.netSavingsStandard);
-    // Color code savings
+    // 2. Net Estimated Savings (Split)
+    outputs.summarySavingsStd.textContent = formatCurrency(metrics.netSavingsStandard);
+    outputs.summarySavingsExp.textContent = formatCurrency(metrics.netSavingsExpert);
+    
+    // Color code savings Standard
     if (metrics.netSavingsStandard > 0) {
-        outputs.summarySavings.className = ''; 
-        outputs.summarySavings.classList.add('stat-positive');
-        outputs.savingsBadge.textContent = `${metrics.efficiencyRatio.toFixed(1)}x Cheaper`;
-        outputs.savingsBadge.style.backgroundColor = '#d1fae5'; // Light green
-        outputs.savingsBadge.style.color = '#059669';
+        outputs.summarySavingsStd.classList.remove('stat-critical');
+        outputs.summarySavingsStd.classList.add('stat-positive');
+        
+        outputs.savingsBadgeStd.textContent = `${metrics.efficiencyRatio.toFixed(1)}x`;
+        outputs.savingsBadgeStd.style.backgroundColor = '#d1fae5'; // Light green
+        outputs.savingsBadgeStd.style.color = '#059669';
     } else {
-        outputs.summarySavings.className = '';
-        outputs.summarySavings.classList.add('stat-critical');
-        outputs.savingsBadge.textContent = 'More Expensive';
-        outputs.savingsBadge.style.backgroundColor = '#fee2e2'; // Light red
-        outputs.savingsBadge.style.color = '#b91c1c';
+        outputs.summarySavingsStd.classList.remove('stat-positive');
+        outputs.summarySavingsStd.classList.add('stat-critical');
+        
+        outputs.savingsBadgeStd.textContent = 'Loss';
+        outputs.savingsBadgeStd.style.backgroundColor = '#fee2e2'; // Light red
+        outputs.savingsBadgeStd.style.color = '#b91c1c';
+    }
+    
+    // Color code savings Expert
+    if (metrics.netSavingsExpert > 0) {
+        outputs.summarySavingsExp.classList.remove('stat-critical');
+        outputs.summarySavingsExp.classList.add('stat-positive');
+        
+        outputs.savingsBadgeExp.textContent = `${metrics.efficiencyRatioExpert.toFixed(1)}x`;
+        outputs.savingsBadgeExp.style.backgroundColor = '#d1fae5'; // Light green
+        outputs.savingsBadgeExp.style.color = '#059669';
+    } else {
+        outputs.summarySavingsExp.classList.remove('stat-positive');
+        outputs.summarySavingsExp.classList.add('stat-critical');
+        
+        outputs.savingsBadgeExp.textContent = 'Loss';
+        outputs.savingsBadgeExp.style.backgroundColor = '#fee2e2'; // Light red
+        outputs.savingsBadgeExp.style.color = '#b91c1c';
     }
 
     // 3. FTEs Required
@@ -367,8 +413,9 @@ function renderUI(metrics) {
         outputs.summaryFTE.className = '';
     }
 
-    // 4. Break-Even
-    outputs.summaryBreakEven.textContent = `${formatNumber(metrics.breakEvenDocs)} Files`;
+    // 4. Break-Even (Split)
+    outputs.summaryBreakEvenStd.textContent = `${formatNumber(metrics.breakEvenDocs)} Files`;
+    outputs.summaryBreakEvenExp.textContent = `${formatNumber(metrics.breakEvenDocsExpert)} Files`;
 
     // 5. AI Cost
     outputs.summaryAiCost.textContent = formatCurrency(metrics.aiTotalCost);
@@ -520,33 +567,57 @@ const MODAL_CONFIGS = {
         title: 'Projected ROI Breakdown',
         id: 'modal-content-roi',
         update: (d) => {
+            // Standard
             updateText('modal-roi-human-cost', formatCurrency(d.minWageTotalCost));
             updateText('modal-roi-ai-cost', formatCurrency(d.aiTotalCost));
             updateText('modal-roi-net-savings', formatCurrency(d.netSavingsStandard));
             updateText('modal-roi-ai-cost-base', formatCurrency(d.aiTotalCost));
             updateText('modal-roi-value', formatNumber(Math.round(d.roiStandard)) + '%');
+            
+            // Expert
+            updateText('modal-roi-human-cost-exp', formatCurrency(d.consultantTotalCost));
+            updateText('modal-roi-ai-cost-exp', formatCurrency(d.aiTotalCost));
+            updateText('modal-roi-net-savings-exp', formatCurrency(d.netSavingsExpert));
+            updateText('modal-roi-ai-cost-base-exp', formatCurrency(d.aiTotalCost));
+            updateText('modal-roi-value-exp', formatNumber(Math.round(d.roiExpert)) + '%');
         }
     },
     savings: {
         title: 'Net Estimated Savings Breakdown',
         id: 'modal-content-savings',
         update: (d) => {
-            updateText('modal-savings-ratio', d.efficiencyRatio.toFixed(1));
+            // Common
+            updateText('modal-savings-aiu', formatNumber(Math.ceil(d.totalAIU)));
+            updateText('modal-savings-packs', d.packsNeeded);
+            
+            // Standard
             updateText('modal-savings-hours', formatNumber(Math.round(d.totalHumanHours)));
             updateText('modal-savings-rate', state.minWageRate.toFixed(2));
             updateText('modal-savings-human-total', formatCurrency(d.minWageTotalCost));
-            updateText('modal-savings-aiu', formatNumber(Math.ceil(d.totalAIU)));
-            updateText('modal-savings-packs', d.packsNeeded);
             updateText('modal-savings-ai-total', formatCurrency(d.aiTotalCost));
             updateText('modal-savings-net', formatCurrency(d.netSavingsStandard));
+            updateText('modal-savings-ratio-display', d.efficiencyRatio.toFixed(1));
+            
+            // Expert
+            updateText('modal-savings-hours-exp', formatNumber(Math.round(d.totalHumanHours)));
+            updateText('modal-savings-rate-exp', state.consultantRate.toFixed(2));
+            updateText('modal-savings-human-total-exp', formatCurrency(d.consultantTotalCost));
+            updateText('modal-savings-ai-total-exp', formatCurrency(d.aiTotalCost));
+            updateText('modal-savings-net-exp', formatCurrency(d.netSavingsExpert));
+            updateText('modal-savings-ratio-display-exp', d.efficiencyRatioExpert.toFixed(1));
         }
     },
     breakeven: {
         title: 'Break-Even Volume Analysis',
         id: 'modal-content-breakeven',
         update: (d) => {
+            // Standard
             updateText('modal-breakeven-manual-cost', d.minWageCostPerDoc.toFixed(4));
             updateText('modal-breakeven-docs', formatNumber(d.breakEvenDocs));
+            
+            // Expert
+            updateText('modal-breakeven-manual-cost-exp', d.consultantCostPerDoc.toFixed(4));
+            updateText('modal-breakeven-docs-exp', formatNumber(d.breakEvenDocsExpert));
         }
     },
     fte: {

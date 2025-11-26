@@ -520,12 +520,31 @@ footer a:hover {
     padding: 20px;
 }
 
-/* Modal Math Styling */
-.math-row {
+/* Modal Split Layout */
+.modal-split-wrapper {
     display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid #f3f4f6;
+    gap: 20px;
+    width: 100%;
+    flex-wrap: wrap; /* Allow stacking on small screens */
+}
+
+.modal-scenario-block {
+    flex: 1;
+    background-color: #f9fafb;
+    border-radius: 8px;
+    padding: 15px;
+    border: 1px solid var(--border-color);
+    min-width: 250px; /* Minimum width for readability */
+}
+
+.modal-scenario-block h4 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1rem;
+    color: var(--primary-color);
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 8px;
+    text-align: center;
 }
 
 .math-row:last-child {
@@ -571,9 +590,54 @@ footer a:hover {
     display: inline-block;
 }
 
-.card-subtext {
-    font-size: 0.85rem;
+
+/* Split Card Layout */
+.stat-split-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center; /* Align items vertically */
+    width: 100%;
+    gap: 10px;
+    margin-top: 5px;
+}
+
+.stat-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
     color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.stat-value {
+    font-size: 1.25rem !important; /* Smaller than the full single value */
+    line-height: 1.2;
+}
+
+.stat-separator {
+    width: 1px;
+    height: 40px; /* Fixed height for separator */
+    background-color: var(--border-color);
+    align-self: center;
+}
+
+.multiplier-badge-small {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 10px;
     margin-top: 4px;
-    font-weight: 500;
+    display: inline-block;
+}
+
+/* Adjust stat-positive/critical for split layout */
+.stat-positive {
+    font-size: 1.25rem !important; /* Match the split size override */
 }
