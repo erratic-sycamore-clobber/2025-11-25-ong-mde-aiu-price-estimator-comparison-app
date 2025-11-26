@@ -17,8 +17,16 @@
                     <h2>Inputs</h2>
                     <div class="controls-grid">
                         <div class="control-group">
-                            <label for="numDocuments">Number of Documents</label>
+                            <label for="numDocuments">Number of Files</label>
                             <input type="number" id="numDocuments" min="1">
+                        </div>
+                        <div class="control-group">
+                            <label for="imagePercentage">File Type Split (% Images)</label>
+                            <div class="range-container">
+                                <input type="range" id="imagePercentage" min="0" max="100" value="0">
+                                <span id="imagePercentageDisplay">0%</span>
+                            </div>
+                            <small class="note">Images (1 page cost) vs PDF/DOCX (variable)</small>
                         </div>
                         <div class="control-group">
                             <label for="enhancedPercentage">Agent Mix (% Enhanced)</label>
@@ -29,7 +37,7 @@
                             <small class="note">Mix of Standard (1 AIU) and Enhanced (3 AIU)</small>
                         </div>
                         <div class="control-group">
-                            <label for="avgPages">Average Pages per Document</label>
+                            <label for="avgPages">Avg Pages (PDF/DOCX only)</label>
                             <div class="range-container">
                                 <input type="range" id="avgPages" min="1" max="50">
                                 <span id="avgPagesDisplay">5</span>
@@ -44,7 +52,7 @@
                             <small class="note">Updates estimated human time</small>
                         </div>
                         <div class="control-group">
-                            <label for="humanTime">Human Processing Time (min/doc)</label>
+                            <label for="humanTime">Human Processing Time (min/file)</label>
                             <input type="number" id="humanTime" step="0.1" min="0.1">
                             <small class="note">Calculated: Fields × 1 + Pages × 0.5</small>
                         </div>
@@ -75,7 +83,7 @@
                 <!-- Current Scenario Summary -->
                 <section class="summary-section">
                     <div class="summary-card">
-                        <h3>Total Documents</h3>
+                        <h3>Total Files</h3>
                         <p id="summaryDocs">1,000,000</p>
                     </div>
                     <div class="summary-card">
@@ -84,7 +92,7 @@
                     </div>
                     <div class="summary-card">
                         <h3>Est. Human Time</h3>
-                        <p id="summaryTime">7.5 min/doc</p>
+                        <p id="summaryTime">7.5 min/file</p>
                     </div>
                     <div class="summary-card highlight">
                         <h3>AI Cost</h3>
@@ -111,7 +119,7 @@
                                     <th class="text-right">Rate / Cost Basis</th>
                                     <th class="text-right">Time Required</th>
                                     <th class="text-right">Total Cost</th>
-                                    <th class="text-right">Cost per Doc</th>
+                                    <th class="text-right">Cost per File</th>
                                     <th class="text-right">vs AI Ratio</th>
                                 </tr>
                             </thead>
@@ -147,7 +155,7 @@
                         <p class="chart-note">Human costs scale linearly with time; AI cost is constant.</p>
                     </div>
                     <div class="chart-card">
-                        <h2>Sensitivity: Document Length Impact</h2>
+                        <h2>Sensitivity: File Length Impact</h2>
                         <div class="chart-container">
                             <canvas id="pageSensitivityChart"></canvas>
                         </div>

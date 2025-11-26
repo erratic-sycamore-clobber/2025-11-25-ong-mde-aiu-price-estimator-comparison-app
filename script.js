@@ -6,7 +6,8 @@ const DEFAULTS = {
     humanTimePerDoc: 750,
     minWageRate: 7.25,
     consultantRate: 200.00,
-    enhancedPercentage: 0
+    enhancedPercentage: 0,
+    imagePercentage: 0
 };
 
 // State Variables
@@ -31,7 +32,9 @@ const inputs = {
     minWageRate: document.getElementById('minWageRate'),
     consultantRate: document.getElementById('consultantRate'),
     enhancedPercentage: document.getElementById('enhancedPercentage'),
-    enhancedPercentageDisplay: document.getElementById('enhancedPercentageDisplay')
+    enhancedPercentageDisplay: document.getElementById('enhancedPercentageDisplay'),
+    imagePercentage: document.getElementById('imagePercentage'),
+    imagePercentageDisplay: document.getElementById('imagePercentageDisplay')
 };
 
 const outputs = {
@@ -52,11 +55,13 @@ function syncDomFromState() {
     inputs.minWageRate.value = state.minWageRate;
     inputs.consultantRate.value = state.consultantRate;
     inputs.enhancedPercentage.value = state.enhancedPercentage;
+    inputs.imagePercentage.value = state.imagePercentage;
 
     // Update displays for ranges
     inputs.avgPagesDisplay.textContent = state.pagesPerDoc;
     inputs.numFieldsDisplay.textContent = state.fieldsPerDoc;
     inputs.enhancedPercentageDisplay.textContent = `${state.enhancedPercentage}%`;
+    inputs.imagePercentageDisplay.textContent = `${state.imagePercentage}%`;
 }
 
 function loadFromURL() {
@@ -66,6 +71,7 @@ function loadFromURL() {
     if (params.has('pages')) state.pagesPerDoc = Number(params.get('pages'));
     if (params.has('fields')) state.fieldsPerDoc = Number(params.get('fields'));
     if (params.has('mix')) state.enhancedPercentage = Number(params.get('mix'));
+    if (params.has('img')) state.imagePercentage = Number(params.get('img'));
     if (params.has('time')) {
         const timeSeconds = Number(params.get('time'));
         if (!isNaN(timeSeconds)) {
@@ -82,6 +88,7 @@ function updateURL() {
     params.set('pages', inputs.avgPages.value);
     params.set('fields', inputs.numFields.value);
     params.set('mix', inputs.enhancedPercentage.value);
+    params.set('img', inputs.imagePercentage.value);
     params.set('time', state.humanTimePerDoc);
     params.set('rate_std', inputs.minWageRate.value);
     params.set('rate_exp', inputs.consultantRate.value);
@@ -119,6 +126,11 @@ function init() {
     inputs.enhancedPercentage.addEventListener('input', (e) => {
         inputs.enhancedPercentageDisplay.textContent = `${e.target.value}%`;
         handleInput(e);
+    });
+    inputs.imagePercentage.addEventListener('input', (e) => {
+        inputs.imagePercentageDisplay.textContent = `${e.target.value}%`;
+        handleInput(e);
+        calculateHeuristicTime(); // Update time estimate when file split changes
     });
     document.getElementById('resetBtn').addEventListener('click', resetInputs);
     
@@ -165,13 +177,21 @@ function updateStateFromDOM() {
     state.minWageRate = Number(inputs.minWageRate.value) || 0;
     state.consultantRate = Number(inputs.consultantRate.value) || 0;
     state.enhancedPercentage = Number(inputs.enhancedPercentage.value) || 0;
+    state.imagePercentage = Number(inputs.imagePercentage.value) || 0;
+}
+
+function getEffectiveAvgPages(pdfPages) {
+    const imageRatio = state.imagePercentage / 100;
+    const docRatio = 1 - imageRatio;
+    return (imageRatio * 1) + (docRatio * pdfPages);
 }
 
 function calculateHeuristicTime() {
-    // Heuristic: 60s per field + 30s per page
+    // Heuristic: 60s per field + 30s per page (using effective pages)
     // Only update if the user hasn't manually focused the time input recently (simple check)
     // For this MVP, we'll just update the input value to show the suggestion
-    const suggestedTimeSeconds = (state.fieldsPerDoc * 60) + (state.pagesPerDoc * 30);
+    const effectivePages = getEffectiveAvgPages(state.pagesPerDoc);
+    const suggestedTimeSeconds = (state.fieldsPerDoc * 60) + (effectivePages * 30);
     state.humanTimePerDoc = suggestedTimeSeconds;
     inputs.humanTime.value = suggestedTimeSeconds / 60;
 }
@@ -205,7 +225,8 @@ function getEffectiveAiuPerPage() {
 }
 
 function calculateAndRender() {
-    const totalPages = state.documents * state.pagesPerDoc;
+    const effectiveAvgPages = getEffectiveAvgPages(state.pagesPerDoc);
+    const totalPages = state.documents * effectiveAvgPages;
     const totalAIU = totalPages * getEffectiveAiuPerPage();
     
     // AI Cost Calculation
@@ -228,7 +249,7 @@ function calculateAndRender() {
     // --- Update Summary ---
     outputs.summaryDocs.textContent = formatNumber(state.documents);
     outputs.summaryPages.textContent = formatNumber(totalPages);
-    outputs.summaryTime.textContent = `${(state.humanTimePerDoc / 60).toFixed(1)} min/doc`;
+    outputs.summaryTime.textContent = `${(state.humanTimePerDoc / 60).toFixed(1)} min/file`;
     outputs.summaryAiCost.textContent = formatCurrency(aiTotalCost);
 
     // --- Update Table ---
@@ -264,7 +285,7 @@ function calculateAndRender() {
     outputs.insightsList.innerHTML = `
         <li>
             <span class="insight-icon text-success">✓</span>
-            <span>AI processing costs <strong>${formatCurrency(aiTotalCost)}</strong> for ${formatNumber(state.documents)} documents.</span>
+            <span>AI processing costs <strong>${formatCurrency(aiTotalCost)}</strong> for ${formatNumber(state.documents)} files.</span>
         </li>
         <li>
             <span class="insight-icon text-warning">✓</span>
@@ -386,7 +407,7 @@ function initCharts() {
         options: {
             ...commonOptions,
             scales: {
-                x: { title: { display: true, text: 'Minutes per Document' } },
+                x: { title: { display: true, text: 'Minutes per File' } },
                 y: { 
                     title: { display: true, text: 'Total Cost' },
                     ticks: { callback: (value) => formatCurrency(value) }
@@ -430,7 +451,7 @@ function initCharts() {
         options: {
             ...commonOptions,
             scales: {
-                x: { title: { display: true, text: 'Pages per Document' } },
+                x: { title: { display: true, text: 'Pages per File (PDF/DOCX)' } },
                 y: { 
                     title: { display: true, text: 'Total Cost' },
                     ticks: { callback: (value) => formatCurrency(value) }
@@ -468,10 +489,11 @@ function updateCharts(aiCost, minWageCost, consultantCost) {
     // Generate data points: 1 to 50 pages
     const pageLabels = [1, 5, 10, 20, 50, 100];
     
-    // AI Cost varies with pages
+    // AI Cost varies with pages (PDF/DOCX pages vary, Images stay at 1)
     const effectiveAiu = getEffectiveAiuPerPage();
-    const pageDataAI = pageLabels.map(pages => {
-        const totalP = state.documents * pages;
+    const pageDataAI = pageLabels.map(pdfPages => {
+        const effectiveAvgPages = getEffectiveAvgPages(pdfPages);
+        const totalP = state.documents * effectiveAvgPages;
         const totalAIU = totalP * effectiveAiu;
         const packs = Math.ceil(totalAIU / AIU_PER_PACK);
         return packs * COST_PER_PACK;
