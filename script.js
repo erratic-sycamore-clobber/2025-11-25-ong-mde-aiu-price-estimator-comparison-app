@@ -216,35 +216,29 @@ function calculateHeuristicTime() {
     inputs.humanTime.value = suggestedTimeSeconds / 60;
 }
 
-function formatCurrency(value) {
-    // Match existing behavior: 
-    // >= 1B: 2 decimals, B suffix
-    // >= 1M: 2 decimals, M suffix
-    // >= 1K: 0 decimals, K suffix
-    // < 1K: 2 decimals, no suffix
+// Shared Formatters
+const Formatters = {
+    currencyLarge: new Intl.NumberFormat('en-US', {
+        style: 'currency', currency: 'USD', notation: 'compact', compactDisplay: 'short', minimumFractionDigits: 0, maximumFractionDigits: 0
+    }),
+    currencySmall: new Intl.NumberFormat('en-US', {
+        style: 'currency', currency: 'USD', notation: 'compact', compactDisplay: 'short', minimumFractionDigits: 2, maximumFractionDigits: 2
+    }),
+    numberLarge: new Intl.NumberFormat('en-GB', {
+        notation: "compact", compactDisplay: "long", maximumFractionDigits: 2
+    }),
+    numberSmall: new Intl.NumberFormat('en-GB'),
     
-    const fractionDigits = (value >= 1000 && value < 1000000) ? 0 : 2;
-    
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        notation: 'compact',
-        compactDisplay: 'short',
-        minimumFractionDigits: fractionDigits,
-        maximumFractionDigits: fractionDigits
-    }).format(value);
-}
-
-function formatNumber(value) {
-    if (value >= 1000000000) {
-        return new Intl.NumberFormat('en-GB', {
-            notation: "compact",
-            compactDisplay: "long",
-            maximumFractionDigits: 2
-        }).format(value);
+    currency(value) {
+        return (value >= 1000 && value < 1000000) ? this.currencyLarge.format(value) : this.currencySmall.format(value);
+    },
+    number(value) {
+        return (value >= 1000000000) ? this.numberLarge.format(value) : this.numberSmall.format(value);
     }
-    return new Intl.NumberFormat('en-GB').format(value);
-}
+};
+
+const formatCurrency = (v) => Formatters.currency(v);
+const formatNumber = (v) => Formatters.number(v);
 
 function getEffectiveAiuPerPage() {
     const standardRatio = (100 - state.enhancedPercentage) / 100;
@@ -405,62 +399,51 @@ function calculateAndRender() {
     updateCharts(aiTotalCost, minWageTotalCost, consultantTotalCost);
 }
 
-function initCharts() {
-    // Common Chart Options
-    const commonOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { position: 'bottom' },
-            tooltip: {
-                callbacks: {
-                    label: function(context) {
-                        let label = context.dataset.label || '';
-                        if (label) {
-                            label += ': ';
+function createChartConfig(type, labels, datasets, extraOptions = {}) {
+    return {
+        type,
+        data: { labels, datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) label += ': ';
+                            if (context.parsed.y !== null) label += formatCurrency(context.parsed.y);
+                            return label;
                         }
-                        if (context.parsed.y !== null) {
-                            label += formatCurrency(context.parsed.y);
-                        }
-                        return label;
                     }
                 }
-            }
+            },
+            ...extraOptions
         }
     };
+}
 
+function initCharts() {
     // 1. Total Cost Bar Chart (Log Scale)
     const ctxCost = document.getElementById('costChart').getContext('2d');
-    costChart = new Chart(ctxCost, {
-        type: 'bar',
-        data: {
-            labels: ['AI Processing', 'Human (Standard)', 'Human (Expert)'],
-            datasets: [{
-                label: 'Total Cost (USD)',
-                data: [0, 0, 0],
-                backgroundColor: [
-                    'rgba(16, 185, 129, 0.7)', // Green
-                    'rgba(245, 158, 11, 0.7)', // Orange
-                    'rgba(239, 68, 68, 0.7)'   // Red
-                ],
-                borderColor: [
-                    'rgb(16, 185, 129)',
-                    'rgb(245, 158, 11)',
-                    'rgb(239, 68, 68)'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            ...commonOptions,
+    costChart = new Chart(ctxCost, createChartConfig(
+        'bar',
+        ['AI Processing', 'Human (Standard)', 'Human (Expert)'],
+        [{
+            label: 'Total Cost (USD)',
+            data: [0, 0, 0],
+            backgroundColor: ['rgba(16, 185, 129, 0.7)', 'rgba(245, 158, 11, 0.7)', 'rgba(239, 68, 68, 0.7)'],
+            borderColor: ['rgb(16, 185, 129)', 'rgb(245, 158, 11)', 'rgb(239, 68, 68)'],
+            borderWidth: 1
+        }],
+        {
             scales: {
                 y: {
                     type: 'logarithmic',
                     title: { display: true, text: 'Cost (Log Scale)' },
                     ticks: {
-                        callback: function(value, index, values) {
-                            // Custom tick formatting for log scale to look cleaner
-                            // Show powers of 10 starting from 1000 (1k, 10k, ... 1B, etc.)
+                        callback: function(value) {
                             const log10 = Math.log10(value);
                             if (value >= 1000 && Math.abs(log10 - Math.round(log10)) < 1e-9) {
                                 return formatCurrency(value);
@@ -471,94 +454,43 @@ function initCharts() {
                 }
             }
         }
-    });
+    ));
 
     // 2. Time Sensitivity Line Chart
     const ctxTime = document.getElementById('timeSensitivityChart').getContext('2d');
-    timeSensitivityChart = new Chart(ctxTime, {
-        type: 'line',
-        data: {
-            labels: [], // Will be mins
-            datasets: [
-                {
-                    label: 'AI Cost',
-                    data: [],
-                    borderColor: 'rgb(16, 185, 129)',
-                    borderDash: [5, 5], // AI cost is constant w.r.t time
-                    tension: 0.1,
-                    fill: false
-                },
-                {
-                    label: 'Human (Standard)',
-                    data: [],
-                    borderColor: 'rgb(245, 158, 11)',
-                    tension: 0.1,
-                    fill: false
-                },
-                {
-                    label: 'Human (Expert)',
-                    data: [],
-                    borderColor: 'rgb(239, 68, 68)',
-                    tension: 0.1,
-                    fill: false
-                }
-            ]
-        },
-        options: {
-            ...commonOptions,
+    timeSensitivityChart = new Chart(ctxTime, createChartConfig(
+        'line', 
+        [], 
+        [
+            { label: 'AI Cost', data: [], borderColor: 'rgb(16, 185, 129)', borderDash: [5, 5], tension: 0.1, fill: false },
+            { label: 'Human (Standard)', data: [], borderColor: 'rgb(245, 158, 11)', tension: 0.1, fill: false },
+            { label: 'Human (Expert)', data: [], borderColor: 'rgb(239, 68, 68)', tension: 0.1, fill: false }
+        ],
+        {
             scales: {
                 x: { title: { display: true, text: 'Minutes per File' } },
-                y: { 
-                    title: { display: true, text: 'Total Cost' },
-                    ticks: { callback: (value) => formatCurrency(value) }
-                }
+                y: { title: { display: true, text: 'Total Cost' }, ticks: { callback: (value) => formatCurrency(value) } }
             }
         }
-    });
+    ));
 
     // 3. Page Sensitivity Line Chart
     const ctxPage = document.getElementById('pageSensitivityChart').getContext('2d');
-    pageSensitivityChart = new Chart(ctxPage, {
-        type: 'line',
-        data: {
-            labels: [], // Will be pages
-            datasets: [
-                {
-                    label: 'AI Cost',
-                    data: [],
-                    borderColor: 'rgb(16, 185, 129)',
-                    tension: 0.1,
-                    fill: false
-                },
-                {
-                    label: 'Human (Standard)',
-                    data: [], // Constant w.r.t pages in this specific model (unless time changes, but this chart isolates page count cost impact assuming fixed time)
-                    borderColor: 'rgb(245, 158, 11)',
-                    borderDash: [5, 5],
-                    tension: 0.1,
-                    fill: false
-                },
-                {
-                    label: 'Human (Expert)',
-                    data: [],
-                    borderColor: 'rgb(239, 68, 68)',
-                    borderDash: [5, 5],
-                    tension: 0.1,
-                    fill: false
-                }
-            ]
-        },
-        options: {
-            ...commonOptions,
+    pageSensitivityChart = new Chart(ctxPage, createChartConfig(
+        'line', 
+        [],
+        [
+            { label: 'AI Cost', data: [], borderColor: 'rgb(16, 185, 129)', tension: 0.1, fill: false },
+            { label: 'Human (Standard)', data: [], borderColor: 'rgb(245, 158, 11)', borderDash: [5, 5], tension: 0.1, fill: false },
+            { label: 'Human (Expert)', data: [], borderColor: 'rgb(239, 68, 68)', borderDash: [5, 5], tension: 0.1, fill: false }
+        ],
+        {
             scales: {
                 x: { title: { display: true, text: 'Pages per File (PDF/DOCX)' } },
-                y: { 
-                    title: { display: true, text: 'Total Cost' },
-                    ticks: { callback: (value) => formatCurrency(value) }
-                }
+                y: { title: { display: true, text: 'Total Cost' }, ticks: { callback: (value) => formatCurrency(value) } }
             }
         }
-    });
+    ));
 }
 
 // --- Modal Logic ---
@@ -568,22 +500,13 @@ function showExplanation(metric) {
     const modalTitle = document.getElementById('modalTitle');
     const closeBtn = document.querySelector('.close-modal');
 
-    // Close handler
-    const closeModal = () => {
-        modal.close();
-    };
-    
+    const closeModal = () => modal.close();
     closeBtn.onclick = closeModal;
-    
-    // Close on backdrop click
-    modal.onclick = (e) => {
-        if (e.target === modal) closeModal();
-    };
+    modal.onclick = (e) => { if (e.target === modal) closeModal(); };
 
-    // Hide all scenario contents first
     document.querySelectorAll('.modal-scenario').forEach(el => el.hidden = true);
 
-    // Calculate current values
+    // Calculations
     const effectiveAvgPages = getEffectiveAvgPages(state.pagesPerDoc);
     const totalPages = state.documents * effectiveAvgPages;
     const totalAIU = totalPages * getEffectiveAiuPerPage();
@@ -596,62 +519,80 @@ function showExplanation(metric) {
     const fteCount = totalHumanHours / EFFECTIVE_ANNUAL_HOURS;
     const efficiencyRatio = aiTotalCost > 0 ? (minWageTotalCost / aiTotalCost) : 0;
 
-    if (metric === 'roi') {
-        modalTitle.textContent = 'Projected ROI Breakdown';
-        const roiStandard = aiTotalCost > 0 ? ((netSavings / aiTotalCost) * 100) : 0;
-        
-        document.getElementById('modal-content-roi').hidden = false;
-        updateText('modal-roi-human-cost', formatCurrency(minWageTotalCost));
-        updateText('modal-roi-ai-cost', formatCurrency(aiTotalCost));
-        updateText('modal-roi-net-savings', formatCurrency(netSavings));
-        updateText('modal-roi-ai-cost-base', formatCurrency(aiTotalCost));
-        updateText('modal-roi-value', formatNumber(Math.round(roiStandard)) + '%');
+    const data = {
+        aiTotalCost, minWageTotalCost, netSavings, totalHumanHours, 
+        totalAIU, packsNeeded, fteCount, efficiencyRatio, totalPages
+    };
 
-    } else if (metric === 'savings') {
-        modalTitle.textContent = 'Net Estimated Savings Breakdown';
-        
-        document.getElementById('modal-content-savings').hidden = false;
-        updateText('modal-savings-ratio', efficiencyRatio.toFixed(1));
-        updateText('modal-savings-hours', formatNumber(Math.round(totalHumanHours)));
-        updateText('modal-savings-rate', state.minWageRate.toFixed(2));
-        updateText('modal-savings-human-total', formatCurrency(minWageTotalCost));
-        updateText('modal-savings-aiu', formatNumber(Math.ceil(totalAIU)));
-        updateText('modal-savings-packs', packsNeeded);
-        updateText('modal-savings-ai-total', formatCurrency(aiTotalCost));
-        updateText('modal-savings-net', formatCurrency(netSavings));
+    const configs = {
+        roi: {
+            title: 'Projected ROI Breakdown',
+            id: 'modal-content-roi',
+            update: (d) => {
+                const roi = d.aiTotalCost > 0 ? ((d.netSavings / d.aiTotalCost) * 100) : 0;
+                updateText('modal-roi-human-cost', formatCurrency(d.minWageTotalCost));
+                updateText('modal-roi-ai-cost', formatCurrency(d.aiTotalCost));
+                updateText('modal-roi-net-savings', formatCurrency(d.netSavings));
+                updateText('modal-roi-ai-cost-base', formatCurrency(d.aiTotalCost));
+                updateText('modal-roi-value', formatNumber(Math.round(roi)) + '%');
+            }
+        },
+        savings: {
+            title: 'Net Estimated Savings Breakdown',
+            id: 'modal-content-savings',
+            update: (d) => {
+                updateText('modal-savings-ratio', d.efficiencyRatio.toFixed(1));
+                updateText('modal-savings-hours', formatNumber(Math.round(d.totalHumanHours)));
+                updateText('modal-savings-rate', state.minWageRate.toFixed(2));
+                updateText('modal-savings-human-total', formatCurrency(d.minWageTotalCost));
+                updateText('modal-savings-aiu', formatNumber(Math.ceil(d.totalAIU)));
+                updateText('modal-savings-packs', d.packsNeeded);
+                updateText('modal-savings-ai-total', formatCurrency(d.aiTotalCost));
+                updateText('modal-savings-net', formatCurrency(d.netSavings));
+            }
+        },
+        breakeven: {
+            title: 'Break-Even Volume Analysis',
+            id: 'modal-content-breakeven',
+            update: (d) => {
+                const minWageCostPerDoc = d.minWageTotalCost / state.documents;
+                const breakEvenDocs = minWageCostPerDoc > 0 ? Math.ceil(COST_PER_PACK / minWageCostPerDoc) : 0;
+                updateText('modal-breakeven-manual-cost', minWageCostPerDoc.toFixed(4));
+                updateText('modal-breakeven-docs', formatNumber(breakEvenDocs));
+            }
+        },
+        fte: {
+            title: 'Est. FTEs Required Breakdown',
+            id: 'modal-content-fte',
+            update: (d) => {
+                const years = d.totalHumanHours / EFFECTIVE_ANNUAL_HOURS;
+                updateText('modal-fte-docs', formatNumber(state.documents));
+                updateText('modal-fte-time-per-doc', (state.humanTimePerDoc / 60).toFixed(1));
+                updateText('modal-fte-total-hours', formatNumber(Math.round(d.totalHumanHours)));
+                updateText('modal-fte-count', formatNumber(Math.ceil(d.fteCount)));
+                updateText('modal-fte-years', years.toFixed(1));
+            }
+        },
+        ai: {
+            title: 'Est. AI Cost Breakdown',
+            id: 'modal-content-ai',
+            update: (d) => {
+                updateText('modal-ai-pages', formatNumber(Math.ceil(d.totalPages)));
+                updateText('modal-ai-aiu-per-page', getEffectiveAiuPerPage().toFixed(2));
+                updateText('modal-ai-total-aiu', formatNumber(Math.ceil(d.totalAIU)));
+                updateText('modal-ai-packs', d.packsNeeded);
+                updateText('modal-ai-total-cost', formatCurrency(d.aiTotalCost));
+            }
+        }
+    };
 
-    } else if (metric === 'breakeven') {
-        modalTitle.textContent = 'Break-Even Volume Analysis';
-        const minWageCostPerDoc = minWageTotalCost / state.documents;
-        const breakEvenDocs = minWageCostPerDoc > 0 ? Math.ceil(COST_PER_PACK / minWageCostPerDoc) : 0;
-        
-        document.getElementById('modal-content-breakeven').hidden = false;
-        updateText('modal-breakeven-manual-cost', minWageCostPerDoc.toFixed(4));
-        updateText('modal-breakeven-docs', formatNumber(breakEvenDocs));
-
-    } else if (metric === 'fte') {
-        modalTitle.textContent = 'Est. FTEs Required Breakdown';
-        const workingYears = totalHumanHours / EFFECTIVE_ANNUAL_HOURS;
-        
-        document.getElementById('modal-content-fte').hidden = false;
-        updateText('modal-fte-docs', formatNumber(state.documents));
-        updateText('modal-fte-time-per-doc', (state.humanTimePerDoc / 60).toFixed(1));
-        updateText('modal-fte-total-hours', formatNumber(Math.round(totalHumanHours)));
-        updateText('modal-fte-count', formatNumber(Math.ceil(fteCount)));
-        updateText('modal-fte-years', workingYears.toFixed(1));
-
-    } else if (metric === 'ai') {
-        modalTitle.textContent = 'Est. AI Cost Breakdown';
-        
-        document.getElementById('modal-content-ai').hidden = false;
-        updateText('modal-ai-pages', formatNumber(Math.ceil(totalPages)));
-        updateText('modal-ai-aiu-per-page', getEffectiveAiuPerPage().toFixed(2));
-        updateText('modal-ai-total-aiu', formatNumber(Math.ceil(totalAIU)));
-        updateText('modal-ai-packs', packsNeeded);
-        updateText('modal-ai-total-cost', formatCurrency(aiTotalCost));
+    const config = configs[metric];
+    if (config) {
+        modalTitle.textContent = config.title;
+        document.getElementById(config.id).hidden = false;
+        config.update(data);
+        modal.showModal();
     }
-
-    modal.showModal();
 }
 
 function updateCharts(aiCost, minWageCost, consultantCost) {
