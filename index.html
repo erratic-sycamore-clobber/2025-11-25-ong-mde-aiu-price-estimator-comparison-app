@@ -39,22 +39,24 @@
                             <small class="note">Standard (1 AIU) vs Enhanced (3 AIU)</small>
                         </div>
                         <div class="control-group">
-                            <label for="avgPages">Avg Pages (PDF/DOCX only)</label>
-                            <div class="range-container">
-                                <input type="range" id="avgPages" min="1" max="50">
-                                <span id="avgPagesDisplay">5</span>
+                            <label for="avgPages">Average Page per File (PDF/DOCX only): <span id="avgPagesDisplay">5</span></label>
+                            <input type="range" id="avgPages" min="1" max="50" class="split-slider">
+                            <div class="slider-labels-row">
+                                <span class="slider-label-left">1</span>
+                                <span class="slider-label-right">50</span>
                             </div>
                         </div>
                         <div class="control-group">
-                            <label for="numFields">Number of Fields to Extract (1-25)</label>
-                            <div class="range-container">
-                                <input type="range" id="numFields" min="1" max="25">
-                                <span id="numFieldsDisplay">10</span>
+                            <label for="numFields">Number of Fields to Extract: <span id="numFieldsDisplay">10</span></label>
+                            <input type="range" id="numFields" min="1" max="25" class="split-slider">
+                            <div class="slider-labels-row">
+                                <span class="slider-label-left">1</span>
+                                <span class="slider-label-right">25</span>
                             </div>
                             <small class="note">Updates estimated human time</small>
                         </div>
                         <div class="control-group">
-                            <label for="humanTime">Human Processing Time (min/file)</label>
+                            <label for="humanTime">Human Processing Time (minutes/file)</label>
                             <input type="number" id="humanTime" step="0.1" min="0.1">
                             <small class="note">Calculated: Fields × 1 + Pages × 0.5</small>
                         </div>
