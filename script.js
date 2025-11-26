@@ -48,9 +48,12 @@ const COST_PER_PACK = 2000;
 };
 
 const outputs = {
-    summaryDocs: document.getElementById('summaryDocs'),
+    summaryROI: document.getElementById('summaryROI'),
     summarySavings: document.getElementById('summarySavings'),
+    savingsBadge: document.getElementById('savingsBadge'),
     summaryFTE: document.getElementById('summaryFTE'),
+    fteSubtext: document.getElementById('fteSubtext'),
+    summaryBreakEven: document.getElementById('summaryBreakEven'),
     summaryAiCost: document.getElementById('summaryAiCost'),
     tableBody: document.querySelector('#comparisonTable tbody'),
     insightsList: document.getElementById('insightsList')
@@ -281,25 +284,61 @@ function calculateAndRender() {
     // Prevent division by zero if AI cost is 0 (unlikely but safe)
     const roiStandard = aiTotalCost > 0 ? ((netSavingsStandard / aiTotalCost) * 100) : 0;
     
+    // Efficiency Multiplier
+    const efficiencyRatio = aiTotalCost > 0 ? (minWageTotalCost / aiTotalCost) : 0;
+
+    // Break-Even Volume
+    // How many docs until manual cost > first pack cost ($2000)?
+    // Formula: BreakEvenDocs = FirstPackCost / HumanCostPerDoc
+    // Note: This is a simplification. Strictly it's a step function vs linear line intersection.
+    // But for "Risk Reversal", showing when the *first* pack pays off is the most honest metric.
+    const breakEvenDocs = minWageCostPerDoc > 0 ? Math.ceil(COST_PER_PACK / minWageCostPerDoc) : 0;
+
     // FTE Calculation
     const fteCount = totalHumanHours / EFFECTIVE_ANNUAL_HOURS;
 
+    // Time Velocity (Years)
+    const workingYears = totalHumanHours / EFFECTIVE_ANNUAL_HOURS;
+
     // --- Update Summary ---
-    outputs.summaryDocs.textContent = formatNumber(state.documents);
     
-    // Net Estimated Savings (Standard)
+    // 1. ROI
+    outputs.summaryROI.textContent = `${formatNumber(Math.round(roiStandard))}%`;
+    // Color code ROI
+    if (roiStandard > 0) {
+        outputs.summaryROI.className = '';
+        outputs.summaryROI.classList.add('stat-positive');
+    } else {
+        outputs.summaryROI.className = '';
+        outputs.summaryROI.classList.add('stat-critical');
+    }
+
+    // 2. Net Estimated Savings (Standard)
     outputs.summarySavings.textContent = formatCurrency(netSavingsStandard);
     // Color code savings
     if (netSavingsStandard > 0) {
-        outputs.summarySavings.className = ''; // Reset
+        outputs.summarySavings.className = ''; 
         outputs.summarySavings.classList.add('stat-positive');
+        outputs.savingsBadge.textContent = `${efficiencyRatio.toFixed(1)}x Cheaper`;
+        outputs.savingsBadge.style.backgroundColor = '#d1fae5'; // Light green
+        outputs.savingsBadge.style.color = '#059669';
     } else {
         outputs.summarySavings.className = '';
         outputs.summarySavings.classList.add('stat-critical');
+        outputs.savingsBadge.textContent = 'More Expensive';
+        outputs.savingsBadge.style.backgroundColor = '#fee2e2'; // Light red
+        outputs.savingsBadge.style.color = '#b91c1c';
     }
 
-    // FTEs Required
+    // 3. FTEs Required
     outputs.summaryFTE.textContent = formatNumber(Math.ceil(fteCount)); 
+    // Update subtext with hours/years
+    if (totalHumanHours > EFFECTIVE_ANNUAL_HOURS) {
+         outputs.fteSubtext.textContent = `approx ${workingYears.toFixed(1)} Years`;
+    } else {
+         outputs.fteSubtext.textContent = `${formatNumber(Math.round(totalHumanHours))} Hours`;
+    }
+    
     // Color code FTE if high
     if (fteCount > 5) {
         outputs.summaryFTE.className = '';
@@ -308,6 +347,10 @@ function calculateAndRender() {
         outputs.summaryFTE.className = '';
     }
 
+    // 4. Break-Even
+    outputs.summaryBreakEven.textContent = `${formatNumber(breakEvenDocs)} Files`;
+
+    // 5. AI Cost
     outputs.summaryAiCost.textContent = formatCurrency(aiTotalCost);
 
     // --- Update Table ---
@@ -565,12 +608,45 @@ function showExplanation(metric) {
 
     let content = '';
 
-    if (metric === 'savings') {
+    if (metric === 'roi') {
+        modalTitle.textContent = 'Projected ROI Breakdown';
+        const roiStandard = aiTotalCost > 0 ? ((netSavings / aiTotalCost) * 100) : 0;
+        content = `
+            <p class="explanation-text">
+                <strong>Return on Investment (ROI)</strong> is calculated based on <strong>Labor Cost Avoidance</strong>. 
+                <br><br>
+                It strictly measures the hard dollar savings of using AI versus paying for manual labor at your specified rates. It does not include "soft" benefits like faster turnaround or reduced error rates, making this a conservative estimate.
+            </p>
+            <div class="math-row">
+                <span class="math-label">Total Human Cost (Liability):</span>
+                <span class="math-value">${formatCurrency(minWageTotalCost)}</span>
+            </div>
+            <div class="math-row">
+                <span class="math-label">Total AI Cost (Investment):</span>
+                <span class="math-value">- ${formatCurrency(aiTotalCost)}</span>
+            </div>
+            <div class="math-row">
+                <span class="math-label"><strong>Net Savings:</strong></span>
+                <span class="math-value"><strong>${formatCurrency(netSavings)}</strong></span>
+            </div>
+            <br>
+            <div class="math-row">
+                <span class="math-label">Investment Base:</span>
+                <span class="math-value">÷ ${formatCurrency(aiTotalCost)}</span>
+            </div>
+            <div class="math-row">
+                <span class="math-label" style="color: var(--secondary-color);"><strong>Projected ROI:</strong></span>
+                <span class="math-value" style="color: var(--secondary-color);"><strong>${formatNumber(Math.round(roiStandard))}%</strong></span>
+            </div>
+        `;
+    } else if (metric === 'savings') {
         modalTitle.textContent = 'Net Estimated Savings Breakdown';
+        const efficiencyRatio = aiTotalCost > 0 ? (minWageTotalCost / aiTotalCost) : 0;
         content = `
             <p class="explanation-text">
                 <strong>Net Estimated Savings</strong> represents the direct financial advantage of using AI over standard manual entry. 
-                It is calculated by subtracting the estimated cost of AI processing from the estimated cost of human labor at standard rates.
+                <br><br>
+                The <strong>Efficiency Multiplier</strong> (e.g., "${efficiencyRatio.toFixed(1)}x") shows how many times more expensive it is to stick with the manual process.
             </p>
             <div class="math-row">
                 <span class="math-label">Total Human Hours:</span>
@@ -606,17 +682,42 @@ function showExplanation(metric) {
                 <span class="math-value" style="color: var(--secondary-color);"><strong>${formatCurrency(netSavings)}</strong></span>
             </div>
         `;
-    } else if (metric === 'fte') {
-        modalTitle.textContent = 'Est. FTEs Required Breakdown';
+    } else if (metric === 'breakeven') {
+        const minWageCostPerDoc = minWageTotalCost / state.documents;
+        const breakEvenDocs = minWageCostPerDoc > 0 ? Math.ceil(COST_PER_PACK / minWageCostPerDoc) : 0;
+        modalTitle.textContent = 'Break-Even Volume Analysis';
         content = `
             <p class="explanation-text">
-                <strong>Full-Time Equivalent (FTE)</strong> estimates the number of full-time employees needed to complete this workload in one year. 
+                <strong>Break-Even Volume</strong> answers the question: "When does this investment pay for itself?"
                 <br><br>
-                We use a realistic annual capacity of <strong>${formatNumber(EFFECTIVE_ANNUAL_HOURS)} hours</strong> per employee. This assumes:
-                <br>• 8-hour work days
-                <br>• 5-day work weeks
-                <br>• <strong>30 days</strong> of annual Paid Time Off (PTO)
-                <br>• <strong>75% productivity rate</strong> (6 effective hours/day)
+                It calculates how many documents you need to process manually before that cost exceeds the price of a single AI Pack ($${formatNumber(COST_PER_PACK)}). Any volume above this number is pure savings.
+            </p>
+             <div class="math-row">
+                <span class="math-label">Cost of 1 AI Pack:</span>
+                <span class="math-value">$${formatNumber(COST_PER_PACK)}</span>
+            </div>
+            <div class="math-row">
+                <span class="math-label">Manual Cost per File:</span>
+                <span class="math-value">÷ $${minWageCostPerDoc.toFixed(4)}</span>
+            </div>
+            <div class="math-row">
+                <span class="math-label" style="color: var(--secondary-color);"><strong>Break-Even Point:</strong></span>
+                <span class="math-value" style="color: var(--secondary-color);"><strong>${formatNumber(breakEvenDocs)} Files</strong></span>
+            </div>
+            <p class="note" style="margin-top: 15px;">
+                Note: This assumes you purchase 1 pack to start.
+            </p>
+        `;
+    } else if (metric === 'fte') {
+        modalTitle.textContent = 'Est. FTEs Required Breakdown';
+        const workingYears = totalHumanHours / EFFECTIVE_ANNUAL_HOURS;
+        content = `
+            <p class="explanation-text">
+                <strong>Full-Time Equivalent (FTE)</strong> estimates the headcount needed.
+                <br>
+                <strong>Time Velocity</strong> (Working Years) highlights the opportunity cost of time.
+                <br><br>
+                We use a realistic annual capacity of <strong>${formatNumber(EFFECTIVE_ANNUAL_HOURS)} hours</strong> per employee (taking into account PTO and 75% productivity).
             </p>
             <div class="math-row">
                 <span class="math-label">Total Documents:</span>
@@ -638,6 +739,10 @@ function showExplanation(metric) {
             <div class="math-row">
                 <span class="math-label" style="color: var(--danger-color);"><strong>FTEs Required:</strong></span>
                 <span class="math-value" style="color: var(--danger-color);"><strong>${formatNumber(Math.ceil(fteCount))}</strong></span>
+            </div>
+            <div class="math-row">
+                <span class="math-label"><strong>Equivalent Time:</strong></span>
+                <span class="math-value"><strong>${workingYears.toFixed(1)} Years</strong></span>
             </div>
         `;
     } else if (metric === 'ai') {

@@ -85,17 +85,23 @@
 
                 <!-- Current Scenario Summary -->
                 <section class="summary-section">
-                    <div class="summary-card">
-                        <h3>Total Files</h3>
-                        <p id="summaryDocs">1,000,000</p>
+                    <div class="summary-card highlight" onclick="showExplanation('roi')" style="cursor: pointer;">
+                        <h3>Projected ROI ⓘ</h3>
+                        <p id="summaryROI">0%</p>
                     </div>
-                    <div class="summary-card highlight" onclick="showExplanation('savings')" style="cursor: pointer;">
+                    <div class="summary-card highlight-secondary" onclick="showExplanation('savings')" style="cursor: pointer;">
                         <h3>Net Est. Savings ⓘ</h3>
                         <p id="summarySavings">$0</p>
+                        <div id="savingsBadge" class="multiplier-badge">1x Cheaper</div>
                     </div>
                     <div class="summary-card" onclick="showExplanation('fte')" style="cursor: pointer;">
                         <h3>Est. FTEs Required ⓘ</h3>
                         <p id="summaryFTE">0</p>
+                        <div id="fteSubtext" class="card-subtext">0 Hours</div>
+                    </div>
+                    <div class="summary-card" onclick="showExplanation('breakeven')" style="cursor: pointer;">
+                        <h3>Break-Even Volume ⓘ</h3>
+                        <p id="summaryBreakEven">0 Files</p>
                     </div>
                     <div class="summary-card" onclick="showExplanation('ai')" style="cursor: pointer;">
                         <h3>Est. AI Cost ⓘ</h3>
