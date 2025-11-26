@@ -21,13 +21,16 @@ let state = { ...DEFAULTS };
 const AIU_PER_PACK = 100000;
 const COST_PER_PACK = 2000;
 
-// Chart Instances
-let costChart = null;
-let timeSensitivityChart = null;
-let pageSensitivityChart = null;
+    // Chart Instances
+    let costChart = null;
+    let timeSensitivityChart = null;
+    let pageSensitivityChart = null;
 
-// DOM Elements
-const inputs = {
+    // New FTE Constant: 230 working days * 6 productive hours (8hrs * 0.75)
+    const EFFECTIVE_ANNUAL_HOURS = 1380;
+    
+    // DOM Elements
+    const inputs = {
     documents: document.getElementById('numDocuments'),
     avgPages: document.getElementById('avgPages'),
     avgPagesDisplay: document.getElementById('avgPagesDisplay'),
@@ -279,8 +282,7 @@ function calculateAndRender() {
     const roiStandard = aiTotalCost > 0 ? ((netSavingsStandard / aiTotalCost) * 100) : 0;
     
     // FTE Calculation
-    // 2080 hours = 52 weeks * 40 hours
-    const fteCount = totalHumanHours / 2080;
+    const fteCount = totalHumanHours / EFFECTIVE_ANNUAL_HOURS;
 
     // --- Update Summary ---
     outputs.summaryDocs.textContent = formatNumber(state.documents);
@@ -526,6 +528,162 @@ function initCharts() {
             }
         }
     });
+}
+
+// --- Modal Logic ---
+
+function showExplanation(metric) {
+    const modal = document.getElementById('explanationModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const closeBtn = document.querySelector('.close-modal');
+
+    // Close handler
+    const closeModal = () => {
+        modal.close();
+        // Reset body scroll if needed, though dialog element handles it well
+    };
+    
+    closeBtn.onclick = closeModal;
+    
+    // Close on backdrop click
+    modal.onclick = (e) => {
+        if (e.target === modal) closeModal();
+    };
+
+    // Calculate current values for display
+    const effectiveAvgPages = getEffectiveAvgPages(state.pagesPerDoc);
+    const totalPages = state.documents * effectiveAvgPages;
+    const totalAIU = totalPages * getEffectiveAiuPerPage();
+    const packsNeeded = Math.ceil(totalAIU / AIU_PER_PACK);
+    const aiTotalCost = packsNeeded * COST_PER_PACK;
+    
+    const totalHumanHours = (state.documents * state.humanTimePerDoc) / 3600;
+    const minWageTotalCost = totalHumanHours * state.minWageRate;
+    const netSavings = minWageTotalCost - aiTotalCost;
+    const fteCount = totalHumanHours / EFFECTIVE_ANNUAL_HOURS;
+
+    let content = '';
+
+    if (metric === 'savings') {
+        modalTitle.textContent = 'Net Estimated Savings Breakdown';
+        content = `
+            <p class="explanation-text">
+                <strong>Net Estimated Savings</strong> represents the direct financial advantage of using AI over standard manual entry. 
+                It is calculated by subtracting the estimated cost of AI processing from the estimated cost of human labor at standard rates.
+            </p>
+            <div class="math-row">
+                <span class="math-label">Total Human Hours:</span>
+                <span class="math-value">${formatNumber(Math.round(totalHumanHours))} hrs</span>
+            </div>
+            <div class="math-row">
+                <span class="math-label">Standard Hourly Rate:</span>
+                <span class="math-value">$${state.minWageRate.toFixed(2)} / hr</span>
+            </div>
+            <div class="math-row">
+                <span class="math-label"><strong>Total Human Cost:</strong></span>
+                <span class="math-value"><strong>${formatCurrency(minWageTotalCost)}</strong></span>
+            </div>
+            <br>
+            <div class="math-row">
+                <span class="math-label">Total AI Units:</span>
+                <span class="math-value">${formatNumber(Math.ceil(totalAIU))} AIU</span>
+            </div>
+             <div class="math-row">
+                <span class="math-label">Packs Needed (100k/pack):</span>
+                <span class="math-value">${packsNeeded} packs</span>
+            </div>
+            <div class="math-row">
+                <span class="math-label">Cost per Pack:</span>
+                <span class="math-value">$${formatNumber(COST_PER_PACK)}</span>
+            </div>
+            <div class="math-row">
+                <span class="math-label"><strong>Total AI Cost:</strong></span>
+                <span class="math-value"><strong>${formatCurrency(aiTotalCost)}</strong></span>
+            </div>
+            <div class="math-row">
+                <span class="math-label" style="color: var(--secondary-color);"><strong>Net Savings:</strong></span>
+                <span class="math-value" style="color: var(--secondary-color);"><strong>${formatCurrency(netSavings)}</strong></span>
+            </div>
+        `;
+    } else if (metric === 'fte') {
+        modalTitle.textContent = 'Est. FTEs Required Breakdown';
+        content = `
+            <p class="explanation-text">
+                <strong>Full-Time Equivalent (FTE)</strong> estimates the number of full-time employees needed to complete this workload in one year. 
+                <br><br>
+                We use a realistic annual capacity of <strong>${formatNumber(EFFECTIVE_ANNUAL_HOURS)} hours</strong> per employee. This assumes:
+                <br>• 8-hour work days
+                <br>• 5-day work weeks
+                <br>• <strong>30 days</strong> of annual Paid Time Off (PTO)
+                <br>• <strong>75% productivity rate</strong> (6 effective hours/day)
+            </p>
+            <div class="math-row">
+                <span class="math-label">Total Documents:</span>
+                <span class="math-value">${formatNumber(state.documents)}</span>
+            </div>
+             <div class="math-row">
+                <span class="math-label">Time per Document:</span>
+                <span class="math-value">${(state.humanTimePerDoc / 60).toFixed(1)} min</span>
+            </div>
+            <div class="math-row">
+                <span class="math-label"><strong>Total Workload Hours:</strong></span>
+                <span class="math-value"><strong>${formatNumber(Math.round(totalHumanHours))} hrs</strong></span>
+            </div>
+            <br>
+            <div class="math-row">
+                <span class="math-label">Effective Annual Hours/FTE:</span>
+                <span class="math-value">÷ ${formatNumber(EFFECTIVE_ANNUAL_HOURS)} hrs</span>
+            </div>
+            <div class="math-row">
+                <span class="math-label" style="color: var(--danger-color);"><strong>FTEs Required:</strong></span>
+                <span class="math-value" style="color: var(--danger-color);"><strong>${formatNumber(Math.ceil(fteCount))}</strong></span>
+            </div>
+        `;
+    } else if (metric === 'ai') {
+        modalTitle.textContent = 'Est. AI Cost Breakdown';
+        content = `
+            <p class="explanation-text">
+                AI costs are calculated based on a <strong>"Lump Sum" purchase model</strong>. 
+                Credits are purchased in minimum blocks (packs) of 100,000 AI Units (AIU).
+                <br><br>
+                • Standard Page = 1 AIU
+                <br>• Enhanced Page = 3 AIU (for complex layouts/handwriting)
+            </p>
+            <div class="math-row">
+                <span class="math-label">Total Pages:</span>
+                <span class="math-value">${formatNumber(Math.ceil(totalPages))}</span>
+            </div>
+            <div class="math-row">
+                <span class="math-label">Effective AIU per Page:</span>
+                <span class="math-value">× ${getEffectiveAiuPerPage().toFixed(2)}</span>
+            </div>
+            <div class="math-row">
+                <span class="math-label"><strong>Total AI Units Needed:</strong></span>
+                <span class="math-value"><strong>${formatNumber(Math.ceil(totalAIU))}</strong></span>
+            </div>
+            <br>
+            <div class="math-row">
+                <span class="math-label">AI Units per Pack:</span>
+                <span class="math-value">÷ ${formatNumber(AIU_PER_PACK)}</span>
+            </div>
+             <div class="math-row">
+                <span class="math-label">Packs Required (Rounded Up):</span>
+                <span class="math-value">${packsNeeded}</span>
+            </div>
+             <div class="math-row">
+                <span class="math-label">Cost per Pack:</span>
+                <span class="math-value">× $${formatNumber(COST_PER_PACK)}</span>
+            </div>
+            <div class="math-row">
+                <span class="math-label" style="color: var(--secondary-color);"><strong>Total AI Cost:</strong></span>
+                <span class="math-value" style="color: var(--secondary-color);"><strong>${formatCurrency(aiTotalCost)}</strong></span>
+            </div>
+        `;
+    }
+
+    modalBody.innerHTML = content;
+    modal.showModal();
 }
 
 function updateCharts(aiCost, minWageCost, consultantCost) {

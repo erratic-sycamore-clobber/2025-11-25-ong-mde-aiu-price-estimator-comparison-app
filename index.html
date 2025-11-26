@@ -89,16 +89,16 @@
                         <h3>Total Files</h3>
                         <p id="summaryDocs">1,000,000</p>
                     </div>
-                    <div class="summary-card highlight">
-                        <h3>Net Est. Savings</h3>
+                    <div class="summary-card highlight" onclick="showExplanation('savings')" style="cursor: pointer;">
+                        <h3>Net Est. Savings ⓘ</h3>
                         <p id="summarySavings">$0</p>
                     </div>
-                    <div class="summary-card">
-                        <h3>Est. FTEs Required</h3>
+                    <div class="summary-card" onclick="showExplanation('fte')" style="cursor: pointer;">
+                        <h3>Est. FTEs Required ⓘ</h3>
                         <p id="summaryFTE">0</p>
                     </div>
-                    <div class="summary-card">
-                        <h3>Est. AI Cost</h3>
+                    <div class="summary-card" onclick="showExplanation('ai')" style="cursor: pointer;">
+                        <h3>Est. AI Cost ⓘ</h3>
                         <p id="summaryAiCost">$100,000</p>
                     </div>
                 </section>
@@ -175,6 +175,19 @@
             </main>
         </div>
     </div>
+
+    <!-- Explanation Modal -->
+    <dialog id="explanationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Calculation Breakdown</h2>
+                <button class="close-modal" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Dynamic Content -->
+            </div>
+        </div>
+    </dialog>
 
     <script src="chart.js"></script>
     <script src="script.js"></script>

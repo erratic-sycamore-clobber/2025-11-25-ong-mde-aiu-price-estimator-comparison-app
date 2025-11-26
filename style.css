@@ -324,16 +324,6 @@ tr:last-child td {
 .text-warning { color: var(--warning-color); }
 .text-danger { color: var(--danger-color); }
 
-.stat-positive {
-    color: var(--secondary-color);
-    font-size: 1.75rem !important; /* Make slightly larger than standard summary text */
-}
-
-.stat-critical {
-    color: var(--danger-color);
-    font-weight: 800 !important;
-}
-
 /* Charts Section */
 .charts-grid {
     display: grid;
@@ -437,4 +427,124 @@ footer a:hover {
     font-size: 0.75rem;
     font-style: italic;
     margin-top: 12px;
+}
+
+/* --- NEW STYLES --- */
+
+/* Stat Highlights */
+.stat-positive {
+    color: var(--secondary-color);
+    font-size: 1.75rem !important; /* Make slightly larger than standard summary text */
+}
+
+.stat-critical {
+    color: var(--danger-color);
+    font-weight: 800 !important;
+}
+
+/* Modal Styling */
+.modal {
+    border: none;
+    border-radius: 8px;
+    padding: 0;
+    background: transparent;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    background-color: rgba(0, 0, 0, 0.5); /* Backdrop */
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal[open] {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    width: 90%;
+    max-width: 600px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h2 {
+    margin: 0;
+    border: none;
+    padding: 0;
+    font-size: 1.25rem;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 5px;
+    line-height: 1;
+}
+
+.close-modal:hover {
+    color: var(--text-main);
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+/* Modal Math Styling */
+.math-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.math-row:last-child {
+    border-bottom: none;
+    font-weight: bold;
+    border-top: 2px solid var(--border-color);
+    margin-top: 8px;
+    padding-top: 12px;
+}
+
+.math-label {
+    color: var(--text-muted);
+}
+
+.math-value {
+    font-family: monospace;
+    font-size: 1rem;
+}
+
+.explanation-text {
+    margin-bottom: 20px;
+    color: var(--text-main);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+/* Hover effect for clickable summary cards */
+.summary-card:hover {
+    transform: translateY(-2px);
+    transition: transform 0.2s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
